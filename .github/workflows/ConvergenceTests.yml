@@ -12,11 +12,12 @@ jobs:
         steps:
         - uses: actions/checkout@v2
         - name: System Dependencies
-          run: .github/workflows/dependencies/systemDeps.sh
-               sudo apt-get install -y python3-setuptools
-               python3 -m pip install --user numpy
-               python3 -m pip install --user argparse
-               python3 -m pip install --user matplotlib
+          run: |
+              .github/workflows/dependencies/systemDeps.sh
+              sudo apt-get install -y python3-setuptools
+              python3 -m pip install --user numpy
+              python3 -m pip install --user argparse
+              python3 -m pip install --user matplotlib
         - name: LMeX Dependencies
           run: .github/workflows/dependencies/peleDeps.sh
         - name: Set Environment Variables
