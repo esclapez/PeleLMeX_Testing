@@ -44,11 +44,11 @@ jobs:
               ./multiRuns.py --test_name GH_CI_CoVo --input_file input.2d_CoVo
               sed -i "49s/.*/    resolution = [32,64,128]/" pprocConvOrder.py
               ./pprocConvOrder.py ./fcompare.gnu.ex --test_name GH_CI_CoVo
-              cp GH_CI_CoVo.png ${{github.workspace}}/ConvergenceTests/
+              cp Convergence_GH_CI_CoVo.png ${{github.workspace}}/ConvergenceTests/GH_CI_CoVo.png
         - name: Commit results
           run: |
               git config --local user.email "actions@github.com"
               git config --local user.name "GitHub Actions"
-              git add UnitTests/GH_CI_CoVo.png
+              git add ConvergenceTests/GH_CI_CoVo.png
               git commit -m 'Append to ConvergenceTest' || echo "No changes to commit"
               git push origin || echo "No changes to commit"
