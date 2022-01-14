@@ -22,7 +22,7 @@ jobs:
         - name: Build AMReX Tools
           env:
                AMREX_HOME: ${GITHUB_WORKSPACE}/build/PeleLMeX/Submodules/amrex
-          working-directory: ${GITHUB_WORKSPACE}/build/PeleLMeX/Submodules/amrex/Tools/Plotfile
+          working-directory: ./build/PeleLMeX/Submodules/amrex/Tools/Plotfile
           run: |
               make -j2
         - name: Build PeleLM
@@ -31,14 +31,14 @@ jobs:
                PELE_PHYSICS_HOME: ${GITHUB_WORKSPACE}/build/PeleLMeX/Submodules/PelePhysics
                AMREX_HYDRO_HOME: ${GITHUB_WORKSPACE}/build/PeleLMeX/Submodules/AMReX-Hydro
                PELELMEX_HOME: ${GITHUB_WORKSPACE}/build/PeleLMeX
-          working-directory: ${GITHUB_WORKSPACE}/build/PeleLMeX/Exec/RegTests/PeriodicCases     
+          working-directory: ./build/PeleLMeX/Exec/RegTests/PeriodicCases     
           run: |
               make -j2 TPL COMP=gnu
               make -j2 COMP=gnu
         - name: Run
           env:
                AMREX_HOME: ${GITHUB_WORKSPACE}/build/PeleLMeX/Submodules/amrex
-          working-directory: ${GITHUB_WORKSPACE}/build/PeleLMeX/Exec/RegTests/PeriodicCases     
+          working-directory: ./build/PeleLMeX/Exec/RegTests/PeriodicCases     
           run: |
               cp ${AMREX_HOME}/Tools/Plotfile/fcompare.gnu.ex .
               sed -i "34s/.*/    resolution = [32,64,128]/" multiRuns.py
