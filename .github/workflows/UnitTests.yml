@@ -12,7 +12,7 @@ jobs:
         steps:
         - uses: actions/checkout@v2
         - name: System Dependencies
-          run: .github/workflows/dependencies/sysDeps.sh
+          run: .github/workflows/dependencies/systemDeps.sh
         - name: LMeX Dependencies
           run: .github/workflows/dependencies/peleDeps.sh
         - name: Append
