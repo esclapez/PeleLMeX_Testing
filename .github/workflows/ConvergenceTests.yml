@@ -6,7 +6,7 @@ on:
         - cron: '0 2 * * *'
 
 jobs:
-    ConvergenceTest:
+    CT_CoVo:
         name: Velocity-Advection
         runs-on: ubuntu-latest
         steps:
@@ -39,10 +39,10 @@ jobs:
           working-directory: ${{env.PELELMEX_HOME}}/Exec/RegTests/PeriodicCases     
           run: |
               cp ${{env.AMREX_HOME}}/Tools/Plotfile/fcompare.gnu.ex .
-              sed -i "34s/.*/    resolution = [32,64,128]/" multiRuns.py
+              sed -i "34s/.*/    resolution = [32,64,128,256,512]/" multiRuns.py
               sed -i "s/mpiexec -n 1/mpiexec -n 4 --oversubscribe/g" multiRuns.py
               ./multiRuns.py --test_name GH_CI_CoVo --input_file input.2d_CoVo
-              sed -i "49s/.*/    resolution = [32,64,128]/" pprocConvOrder.py
+              sed -i "49s/.*/    resolution = [32,64,128,256,512]/" pprocConvOrder.py
               ./pprocConvOrder.py ./fcompare.gnu.ex --test_name GH_CI_CoVo
               cp Convergence_GH_CI_CoVo.png ${{github.workspace}}/ConvergenceTests/GH_CI_CoVo.png
         - name: Commit results
@@ -50,5 +50,101 @@ jobs:
               git config --local user.email "actions@github.com"
               git config --local user.name "GitHub Actions"
               git add ConvergenceTests/GH_CI_CoVo.png
-              git commit -m 'Append to ConvergenceTest' || echo "No changes to commit"
+              git commit -m 'Update Vel-Adv ConvergenceTest' || echo "No changes to commit"
+              git push origin || echo "No changes to commit"
+
+    CT_CoGaussSpec:
+        name: Species-Advection
+        runs-on: ubuntu-latest
+        steps:
+        - uses: actions/checkout@v2
+        - name: System Dependencies
+          run: |
+              .github/workflows/dependencies/systemDeps.sh
+              sudo apt-get install -y python3-setuptools
+              python3 -m pip install --user numpy
+              python3 -m pip install --user argparse
+              python3 -m pip install --user matplotlib
+        - name: LMeX Dependencies
+          run: .github/workflows/dependencies/peleDeps.sh
+        - name: Set Environment Variables
+          run: |
+              echo "AMREX_HOME=${{github.workspace}}/build/PeleLMeX/Submodules/amrex" >> $GITHUB_ENV
+              echo "PELE_PHYSICS_HOME=${{github.workspace}}/build/PeleLMeX/Submodules/PelePhysics" >> $GITHUB_ENV
+              echo "AMREX_HYDRO_HOME=${{github.workspace}}/build/PeleLMeX/Submodules/AMReX-Hydro" >> $GITHUB_ENV
+              echo "PELELMEX_HOME=${{github.workspace}}/build/PeleLMeX/" >> $GITHUB_ENV
+        - name: Build AMReX Tools
+          working-directory: ${{env.AMREX_HOME}}/Tools/Plotfile
+          run: |
+              make -j2 VERBOSE=FALSE
+        - name: Build PeleLM
+          working-directory: ${{env.PELELMEX_HOME}}/Exec/RegTests/PeriodicCases     
+          run: |
+              make -j2 TPL COMP=gnu
+              make -j2 COMP=gnu
+        - name: Run
+          working-directory: ${{env.PELELMEX_HOME}}/Exec/RegTests/PeriodicCases     
+          run: |
+              cp ${{env.AMREX_HOME}}/Tools/Plotfile/fcompare.gnu.ex .
+              sed -i "34s/.*/    resolution = [32,64,128,256,512]/" multiRuns.py
+              sed -i "s/mpiexec -n 1/mpiexec -n 4 --oversubscribe/g" multiRuns.py
+              ./multiRuns.py --test_name GH_CI_CoGauS --input_file input.2d_CoGauS
+              sed -i '48s/.*/    vars=["density", "Y(N2)", "Y(O2)" ]/' pprocConvOrder.py 
+              sed -i "49s/.*/    resolution = [32,64,128,256,512]/" pprocConvOrder.py
+              ./pprocConvOrder.py ./fcompare.gnu.ex --test_name GH_CI_CoGausS
+              cp Convergence_GH_CI_CoGauS.png ${{github.workspace}}/ConvergenceTests/GH_CI_CoGauS.png
+        - name: Commit results
+          run: |
+              git config --local user.email "actions@github.com"
+              git config --local user.name "GitHub Actions"
+              git add ConvergenceTests/GH_CI_CoGauS.png
+              git commit -m 'Update Spec-Adv ConvergenceTest' || echo "No changes to commit"
+              git push origin || echo "No changes to commit"
+
+    CT_CoGaussTemp:
+        name: Temperature-Advection
+        runs-on: ubuntu-latest
+        steps:
+        - uses: actions/checkout@v2
+        - name: System Dependencies
+          run: |
+              .github/workflows/dependencies/systemDeps.sh
+              sudo apt-get install -y python3-setuptools
+              python3 -m pip install --user numpy
+              python3 -m pip install --user argparse
+              python3 -m pip install --user matplotlib
+        - name: LMeX Dependencies
+          run: .github/workflows/dependencies/peleDeps.sh
+        - name: Set Environment Variables
+          run: |
+              echo "AMREX_HOME=${{github.workspace}}/build/PeleLMeX/Submodules/amrex" >> $GITHUB_ENV
+              echo "PELE_PHYSICS_HOME=${{github.workspace}}/build/PeleLMeX/Submodules/PelePhysics" >> $GITHUB_ENV
+              echo "AMREX_HYDRO_HOME=${{github.workspace}}/build/PeleLMeX/Submodules/AMReX-Hydro" >> $GITHUB_ENV
+              echo "PELELMEX_HOME=${{github.workspace}}/build/PeleLMeX/" >> $GITHUB_ENV
+        - name: Build AMReX Tools
+          working-directory: ${{env.AMREX_HOME}}/Tools/Plotfile
+          run: |
+              make -j2 VERBOSE=FALSE
+        - name: Build PeleLM
+          working-directory: ${{env.PELELMEX_HOME}}/Exec/RegTests/PeriodicCases     
+          run: |
+              make -j2 TPL COMP=gnu
+              make -j2 COMP=gnu
+        - name: Run
+          working-directory: ${{env.PELELMEX_HOME}}/Exec/RegTests/PeriodicCases     
+          run: |
+              cp ${{env.AMREX_HOME}}/Tools/Plotfile/fcompare.gnu.ex .
+              sed -i "34s/.*/    resolution = [32,64,128,256,512]/" multiRuns.py
+              sed -i "s/mpiexec -n 1/mpiexec -n 4 --oversubscribe/g" multiRuns.py
+              ./multiRuns.py --test_name GH_CI_CoGauT --input_file input.2d_CoGauT
+              sed -i '48s/.*/    vars=["density", "temp", "rhoh" ]/' pprocConvOrder.py 
+              sed -i "49s/.*/    resolution = [32,64,128,256,512]/" pprocConvOrder.py
+              ./pprocConvOrder.py ./fcompare.gnu.ex --test_name GH_CI_CoGausT
+              cp Convergence_GH_CI_CoGauT.png ${{github.workspace}}/ConvergenceTests/GH_CI_CoGauT.png
+        - name: Commit results
+          run: |
+              git config --local user.email "actions@github.com"
+              git config --local user.name "GitHub Actions"
+              git add ConvergenceTests/GH_CI_CoGauT.png
+              git commit -m 'Update Temp-Adv ConvergenceTest' || echo "No changes to commit"
               git push origin || echo "No changes to commit"
