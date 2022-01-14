@@ -51,7 +51,7 @@ jobs:
               git config --local user.name "GitHub Actions"
               git add ConvergenceTests/GH_CI_CoVo.png
               git commit -m 'Update Vel-Adv ConvergenceTest' || echo "No changes to commit"
-              git push origin || echo "No changes to commit"
+              #git push origin || echo "No changes to commit"
 
     CT_CoGaussSpec:
         name: Species-Advection
@@ -89,6 +89,7 @@ jobs:
               sed -i "34s/.*/    resolution = [32,64,128,256,512]/" multiRuns.py
               sed -i "s/mpiexec -n 1/mpiexec -n 4 --oversubscribe/g" multiRuns.py
               ./multiRuns.py --test_name GH_CI_CoGauS --input_file input.2d_CoGauS
+              ls -ltr GH_CI_CoGauS_plt*
               sed -i '48s/.*/    vars=["density", "Y(N2)", "Y(O2)" ]/' pprocConvOrder.py 
               sed -i "49s/.*/    resolution = [32,64,128,256,512]/" pprocConvOrder.py
               ./pprocConvOrder.py ./fcompare.gnu.ex --test_name GH_CI_CoGausS
@@ -137,6 +138,7 @@ jobs:
               sed -i "34s/.*/    resolution = [32,64,128,256,512]/" multiRuns.py
               sed -i "s/mpiexec -n 1/mpiexec -n 4 --oversubscribe/g" multiRuns.py
               ./multiRuns.py --test_name GH_CI_CoGauT --input_file input.2d_CoGauT
+              ls -ltr GH_CI_CoGauT_plt*
               sed -i '48s/.*/    vars=["density", "temp", "rhoh" ]/' pprocConvOrder.py 
               sed -i "49s/.*/    resolution = [32,64,128,256,512]/" pprocConvOrder.py
               ./pprocConvOrder.py ./fcompare.gnu.ex --test_name GH_CI_CoGausT
