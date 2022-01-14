@@ -22,7 +22,7 @@ jobs:
         - name: Build AMReX Tools
           env:
                AMREX_HOME: ${GITHUB_WORKSPACE}/build/PeleLMeX/Submodules/amrex
-          working-directory: ./build/amrex/Tools/Plotfile
+          working-directory: ${AMREX_HOME}/Tools/Plotfile
           run: |
               make -j2
         - name: Build PeleLM
