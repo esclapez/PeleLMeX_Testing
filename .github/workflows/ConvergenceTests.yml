@@ -51,7 +51,7 @@ jobs:
               git config --local user.name "GitHub Actions"
               git add ConvergenceTests/GH_CI_CoVo.png
               git commit -m 'Update Vel-Adv ConvergenceTest' || echo "No changes to commit"
-              #git push origin || echo "No changes to commit"
+              git push origin || echo "No changes to commit"
 
     CT_CoGaussSpec:
         name: Species-Advection
@@ -92,7 +92,7 @@ jobs:
               ls -ltr GH_CI_CoGauS_plt*
               sed -i '48s/.*/    vars=["density", "Y(N2)", "Y(O2)" ]/' pprocConvOrder.py 
               sed -i "49s/.*/    resolution = [32,64,128,256,512]/" pprocConvOrder.py
-              ./pprocConvOrder.py ./fcompare.gnu.ex --test_name GH_CI_CoGausS
+              ./pprocConvOrder.py ./fcompare.gnu.ex --test_name GH_CI_CoGauS
               cp Convergence_GH_CI_CoGauS.png ${{github.workspace}}/ConvergenceTests/GH_CI_CoGauS.png
         - name: Commit results
           run: |
@@ -141,7 +141,7 @@ jobs:
               ls -ltr GH_CI_CoGauT_plt*
               sed -i '48s/.*/    vars=["density", "temp", "rhoh" ]/' pprocConvOrder.py 
               sed -i "49s/.*/    resolution = [32,64,128,256,512]/" pprocConvOrder.py
-              ./pprocConvOrder.py ./fcompare.gnu.ex --test_name GH_CI_CoGausT
+              ./pprocConvOrder.py ./fcompare.gnu.ex --test_name GH_CI_CoGauT
               cp Convergence_GH_CI_CoGauT.png ${{github.workspace}}/ConvergenceTests/GH_CI_CoGauT.png
         - name: Commit results
           run: |
