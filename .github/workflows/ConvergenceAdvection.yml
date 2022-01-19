@@ -1,4 +1,4 @@
-name: LMeX_ConvergenceTests
+name: LMeX_ConvergenceAdvection
 
 on:
     workflow_dispatch:

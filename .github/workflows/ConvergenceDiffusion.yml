@@ -1,0 +1,58 @@
+name: LMeX_ConvergenceDiffusion
+
+on:
+    workflow_dispatch:
+    schedule:
+        - cron: '0 2 * * *'
+
+jobs:
+    CT_DiffusionSpec:
+        name: Species-Diffusion
+        runs-on: ubuntu-latest
+        steps:
+        - uses: actions/checkout@v2
+        - name: System Dependencies
+          run: |
+              .github/workflows/dependencies/systemDeps.sh
+              sudo apt-get install -y python3-setuptools
+              python3 -m pip install --user numpy
+              python3 -m pip install --user argparse
+              python3 -m pip install --user matplotlib
+        - name: LMeX Dependencies
+          run: .github/workflows/dependencies/peleDeps.sh
+        - name: Set Environment Variables
+          run: |
+              echo "AMREX_HOME=${{github.workspace}}/build/PeleLMeX/Submodules/amrex" >> $GITHUB_ENV
+              echo "PELE_PHYSICS_HOME=${{github.workspace}}/build/PeleLMeX/Submodules/PelePhysics" >> $GITHUB_ENV
+              echo "AMREX_HYDRO_HOME=${{github.workspace}}/build/PeleLMeX/Submodules/AMReX-Hydro" >> $GITHUB_ENV
+              echo "PELELMEX_HOME=${{github.workspace}}/build/PeleLMeX/" >> $GITHUB_ENV
+        - name: Build AMReX Tools
+          working-directory: ${{env.AMREX_HOME}}/Tools/Plotfile
+          run: |
+              make -j2 VERBOSE=FALSE
+        - name: Build PeleLM
+          working-directory: ${{env.PELELMEX_HOME}}/Exec/RegTests/PeriodicCases     
+          run: |
+              make -j2 TPL COMP=gnu Chemistry_Model=nitrogens
+              make -j2 COMP=gnu Chemistry_Model=nitrogens
+        - name: Run
+          working-directory: ${{env.PELELMEX_HOME}}/Exec/RegTests/PeriodicCases     
+          run: |
+              cp ${{env.AMREX_HOME}}/Tools/Plotfile/fcompare.gnu.ex .
+              sed -i "34s/.*/    resolution = [32,64,128,256,512]/" multiRuns.py
+              sed -i "s/mpiexec -n 1/mpiexec -n 4 --oversubscribe/g" multiRuns.py
+              ./multiRuns.py --test_name GH_CI_SpecDiff --input_file input.2d_DiffGauS
+              ./multiRuns.py --test_name GH_CI_SpecDiffRef --input_file input.2d_DiffGauSRef
+              sed -i '48s/.*/    vars=["Y(N2)", "Y(N2a)" ]/' pprocConvOrder.py 
+              sed -i "49s/.*/    resolution = [32,64,128,256,512]/" pprocConvOrder.py
+              sed -i '77s/.*/            refpltfile = "{}Ref_plt_{}_00000".format(args.test_name,case)/' pprocConvOrder.py
+              ./pprocConvOrder.py ./fcompare.gnu.ex --test_name GH_CI_SpecDiff
+              cp Convergence_GH_CI_SpecDiff.png ${{github.workspace}}/ConvergenceTests/GH_CI_SpecDiff.png
+        - name: Commit results
+          run: |
+              git config --local user.email "actions@github.com"
+              git config --local user.name "GitHub Actions"
+              git pull
+              git add ConvergenceTests/GH_CI_SpecDiff.png
+              git commit -m 'Update Spec-Diff ConvergenceTest' || echo "No changes to commit"
+              git push origin || echo "No changes to commit"
