@@ -1,6 +1,7 @@
 # PeleLMeX ConvergenceTests
 
-The following 
+The following gather the results of a series of canonical test cases evaluating the order of convergence of PeleLMeX algorithm in space.
+Currently, PeleLMeX algorithm is expected to reach second order accurate convergence rate.
 
 ## Advection scheme
 
@@ -27,3 +28,9 @@ solution.
 ![image info](./GH_CI_CoGauT.png)
 
 ## Diffusion scheme
+
+The diffusion of species is tested in the particular case of a binary mixture of identical species
+(nitrogen in this case) to ensure constant density. This enable to compare the PeleLMeX results
+with an analytical solution.
+
+![image info](./GH_CI_SpecDiff.png)
