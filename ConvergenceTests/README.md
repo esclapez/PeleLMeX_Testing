@@ -5,7 +5,7 @@ Currently, PeleLMeX algorithm is expected to reach second order accurate converg
 
 ## Advection scheme
 
-[![AdvectionTests](https://github.com/esclapez/PeleLMeX_Testing/actions/workflows/ConvergenceTests.yml/badge.svg)](https://github.com/esclapez/PeleLMeX_Testing/actions/workflows/ConvergenceTests.yml)
+[![AdvectionTests](https://github.com/esclapez/PeleLMeX_Testing/actions/workflows/ConvergenceAdvection.yml/badge.svg)](https://github.com/esclapez/PeleLMeX_Testing/actions/workflows/ConvergenceAdvection.yml)
 
 ### Convected vortex:
 
@@ -28,6 +28,10 @@ solution.
 ![image info](./GH_CI_CoGauT.png)
 
 ## Diffusion scheme
+
+[![LMeX_ConvergenceDiffusion](https://github.com/esclapez/PeleLMeX_Testing/actions/workflows/ConvergenceDiffusion.yml/badge.svg)](https://github.com/esclapez/PeleLMeX_Testing/actions/workflows/ConvergenceDiffusion.yml)
+
+### Binary mixture diffusion :
 
 The diffusion of species is tested in the particular case of a binary mixture of identical species
 (nitrogen in this case) to ensure constant density. This enable to compare the PeleLMeX results
