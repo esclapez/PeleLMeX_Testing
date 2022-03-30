@@ -13,5 +13,5 @@ sudo apt-get install -y --no-install-recommends\
     build-essential \
     g++ \
     libopenmpi-dev  \
-    mpich \
+    openmpi-bin \
     git
