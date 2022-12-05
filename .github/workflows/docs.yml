@@ -42,7 +42,6 @@ jobs:
            echo "::remove-matcher owner=sphinx-problem-matcher::"
            touch ${{runner.workspace}}/build-docs/html/manual/html/.nojekyll
       - name: Deploy
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: JamesIves/github-pages-deploy-action@releases/v3
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
