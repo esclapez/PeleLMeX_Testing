@@ -17,11 +17,6 @@ automatically with certain pushes to the `PeleLMeX` GibHub repository. A local v
 where ``PELELMEX_HOME`` is the location of your clone of the `PeleLMeX` repository.  To view the local pages,
 point your web browser at the file ``${PELELMEX_HOME}/Docs/build/html/index.html``.
 
-**Current docs build status on ReadTheDocs:**
-
-.. image:: https://readthedocs.org/projects/pelelmex/badge
-
-
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
