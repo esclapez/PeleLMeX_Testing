@@ -148,7 +148,7 @@ and simplified velocity constraint,
 Geometry with Embedded Boundaries
 ---------------------------------
 
-`PeleLMeX` relies on `AMReX's implementation<https://amrex-codes.github.io/amrex/docs_html/EB_Chapter.html>`_ of 
+`PeleLMeX` relies on `AMReX's implementation <https://amrex-codes.github.io/amrex/docs_html/EB_Chapter.html>`_ of 
 the Embedded Boundaries (EB) approach to represent geometrical objects. In this approach, the underlying computational 
 mesh is uniform and block-structured, but the boundary of the irregular-shaped computational domain conceptually cuts 
 through this mesh. Each cell in the mesh becomes labeled as regular, cut or covered, and the finite-volume 
