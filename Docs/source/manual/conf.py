@@ -56,6 +56,10 @@ exclude_patterns = ['.DS_Store']
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
+# The name of an image file (relative to this directory) to place at the top
+# of the sidebar.
+html_logo = "_static/swirlH2Fast_OH_vort_256.png"
+
 numfig = True
 numfig_format = {'figure': '%s', 'table': '%s', 'code-block': '%s'}
 
