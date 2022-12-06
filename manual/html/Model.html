@@ -211,10 +211,12 @@ adaptive mesh refinement (AMR) code that solves the reacting Navier-Stokes equat
 </section>
 <section id="pelelmex-algorithm">
 <h2>PeleLMeX Algorithm<a class="headerlink" href="#pelelmex-algorithm" title="Permalink to this heading"></a></h2>
-<p>An overview of <cite>PeleLMeX</cite> time-advance function is provided in Fig. and details are provided in the following subsections.</p>
-<figure class="align-center" style="width: 50%">
+<p>An overview of <cite>PeleLMeX</cite> time-advance function is provided in the figure below and details are provided in the following subsections.</p>
+<figure class="align-center" style="width: 70%">
 <img alt="_images/PeleLMeX_Algorithm.png" src="_images/PeleLMeX_Algorithm.png" />
 </figure>
+<p>The three steps of the low Mach number projection scheme are highlighted to better emphasize how the thermodynamic solve is
+closely weaved into the fractional step appraoch.</p>
 <section id="low-mach-number-projection-scheme">
 <h3>Low Mach number projection scheme<a class="headerlink" href="#low-mach-number-projection-scheme" title="Permalink to this heading"></a></h3>
 <p><cite>PeleLMeX</cite> implements a finite-volume, Cartesian grid discretization approach with constant grid spacing, where
@@ -242,8 +244,16 @@ satisfied the equation of state. The solution, <span class="math notranslate noh
 <p>After the <em>MAC</em>-projection, <span class="math notranslate nohighlight">\(U^{\rm ADV}\)</span> is a second-order accurate, staggered (face-centered) grid vector
 field at <span class="math notranslate nohighlight">\(t^{n+1/2}\)</span> that discretely satisfies the constraint.  This field is the advection velocity used for computing
 the time-explicit advective fluxes for <span class="math notranslate nohighlight">\(U\)</span>, <span class="math notranslate nohighlight">\(\rho h\)</span>, and <span class="math notranslate nohighlight">\(\rho Y_m\)</span>.</p>
-<p><strong>Step 2</strong>: (<em>Advance thermodynamic variables</em>) Integrate <span class="math notranslate nohighlight">\((\rho Y_m,\rho h)\)</span> over the full time step.  The details of
-this are presented in the next subsection.</p>
+<p><strong>Step 2</strong>: (<em>Advance thermodynamic variables</em>) Integrate <span class="math notranslate nohighlight">\((\rho Y_m,\rho h)\)</span> over the full time step using a spectral deferred correction (SDC) appraoch, the details of which can be found in <a class="reference external" href="https://amrex-combustion.github.io/PeleLM/manual/html/Model.html#sdc-preliminaries">PeleLM documentation</a>.</p>
+<ul class="simple">
+<li><p>We begin by computing the diffusion operators at <span class="math notranslate nohighlight">\(t^n\)</span> that will be needed throughout the SDC iteration. Specifically, we evaluate the transport coefficients</p></li>
+</ul>
+<p><span class="math notranslate nohighlight">\((\lambda,C_p,\mathcal D_m,h_m)^n\)</span> from <span class="math notranslate nohighlight">\((Y_m,T)^n\)</span>, and the provisional diffusion fluxes, <span class="math notranslate nohighlight">\(\widetilde{\boldsymbol{\cal F}}_m^n\)</span>.  These fluxes are conservatively corrected (i.e., adjusted to sum to zero by adding a mass-weighted “correction velocity”) to obtain <span class="math notranslate nohighlight">\({\boldsymbol{\cal F}}_m^n\)</span> such that <span class="math notranslate nohighlight">\(\sum {\boldsymbol{\cal F}}_m^n = 0\)</span>.
+Finally, we copy the transport coefficients, diffusion fluxes and the thermodynamic state from <span class="math notranslate nohighlight">\(t^n\)</span> as starting values for
+<span class="math notranslate nohighlight">\(t^{n+1}\)</span>, and initialize the reaction terms, <span class="math notranslate nohighlight">\(I_R\)</span> from the values used in the previous step.</p>
+<ul class="simple">
+<li><p>The following sequence is then repeated for each iteration, <span class="math notranslate nohighlight">\(k&lt;k_{max}\)</span></p></li>
+</ul>
 <p><strong>Step 3</strong>: (<em>Advance the velocity</em>) Compute an intermediate cell-centered velocity field, <span class="math notranslate nohighlight">\(U^{n+1,*}\)</span> using the lagged pressure
 gradient, by solving</p>
 <div class="math notranslate nohighlight">
