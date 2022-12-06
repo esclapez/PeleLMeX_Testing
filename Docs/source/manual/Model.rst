@@ -174,7 +174,7 @@ PeleLMeX Algorithm
 
 An overview of `PeleLMeX` time-advance function is provided in Fig. and details are provided in the following subsections.
 
-.. figure:: images/model/PeleLMeX_Algorithm.pdf
+.. figure:: images/model/PeleLMeX_Algorithm.png
    :align: center
    :figwidth: 50%
 
