@@ -224,25 +224,18 @@ the time-explicit advective fluxes for :math:`U`, :math:`\rho h`, and :math:`\rh
 
 * The following sequence is then repeated for each iteration :math:`k<k_{max}` starting at :math:`k=0`:
 
-    #. if :math:`k>0`, compute the lagged (previous :math:`k` iteration) transport properties, diffusion terms :math:`D^{n+1,(k)}` and divergence constraint :math:`\widehat S^{n+1,(k)}`
+  #. if :math:`k>0`, compute the lagged (previous :math:`k` iteration) transport properties, diffusion terms :math:`D^{n+1,(k)}` and divergence constraint :math:`\widehat S^{n+1,(k)}`
 
-    #. construct the *MAC*-projection RHS :math:`S^{MAC}`, combining :math:`t^n` and :math:`t^{n+1,(k)}` estimates of :math:`\widehat S`, and the pressure correction :math:`\chi` (Nonaka *et al*, 2018):
+  #. construct the *MAC*-projection RHS :math:`S^{MAC}`, combining :math:`t^n` and :math:`t^{n+1,(k)}` estimates of :math:`\widehat S`, and the pressure correction :math:`\chi` (Nonaka *et al*, 2018):
 
-.. math::
+     .. math::
 
-    S^{MAC} = \frac{1}{2}(\widehat S^n + \widehat S^{n+1,(k)}) + \sum_{i=0}^k \frac{1}{p_{them}^{n+1,i}}\frac{p_{them}^{n+1,i}-p_0}{\Delta t}
+        S^{MAC} = \frac{1}{2}(\widehat S^n + \widehat S^{n+1,(k)}) + \sum_{i=0}^k \frac{1}{p_{therm}^{n+1,(i)}}\frac{p_{therm}^{n+1,(i)}-p_0}{\Delta t}
 
-.. 
-    #. Perform **Step 1** to obtain the time-centered, stagered :math:`U^{ADV}`
 
-    #. Use a second-order Godunov integrator to predict species time-centered edge states, :math:`(\rho Y_m)^{n+1/2,(k+1)}` and their advection terms at :math:`t^{n+1/2}`, :math:`(A_m^{n+1/2,(k+1)})`. Source terms for this prediction include explicit diffusion forcing, :math:`D^{n}`, and an iteration-lagged reaction term, :math:`I_R^{(k)}`. Since the remaining steps of the algorithm for this iteration (including diffusion and chemistry advances) will not affect the new-time density for this iteration, we can already compute :math:`\rho^{n+1,(k+1)}`. This will be needed in the trapezoidal-in-time diffusion solves. 
-    
-.. math::
+  #. Perform **Step 1** to obtain the time-centered, stagered :math:`U^{ADV}`
 
-    \frac{\rho^{n+1,(k+1)} - \rho^n}{\Delta t} = A_{\rho}^{n+1/2,(k+1)} = \sum A_{m}^{n+1/2,(k+1)}
-    = -\sum_m\nabla\cdot\left(U^{\rm ADV}\rho Y_m\right)^{n+1/2,(k+1)}.
-
-.. 
+  #. Use a second-order Godunov integrator to predict species time-centered edge states, :math:`(\rho Y_m)^{n+1/2,(k+1)}` and their advection terms at :math:`t^{n+1/2}`, :math:`(A_m^{n+1/2,(k+1)})`. Source terms for this prediction include explicit diffusion forcing, :math:`D^{n}`, and an iteration-lagged reaction term, :math:`I_R^{(k)}`. Since the remaining steps of the algorithm for this iteration (including diffusion and chemistry advances) will not affect the new-time density for this iteration, we can already compute :math:`\rho^{n+1,(k+1)}`. This will be needed in the trapezoidal-in-time diffusion solves. 
 
 **Step 3**: (*Advance the velocity*) Compute an intermediate cell-centered velocity field, :math:`U^{n+1,*}` using the lagged pressure 
 gradient, by solving
