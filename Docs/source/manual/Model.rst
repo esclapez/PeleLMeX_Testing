@@ -188,8 +188,9 @@ Low Mach number projection scheme
 :math:`U`, :math:`\rho`, :math:`\rho Y_m`, :math:`\rho h`, and :math:`T` represent cell averages, and the pressure field, :math:`\pi`, is defined on the nodes
 of the grid, and is temporally constant on the intervals over the time step.
 The projection scheme is based on a fractional step appraoch where, for purely incompressible flow, the velocity is first advanced in time
-using the momentum equation and subsequently projected to enforce the divergence constraint. When considering variable density flows,
-the thermodynamic advance of the is performed between these two steps. The three major steps of the algorithm (Almgren et al 1998, Day et al, 2000):
+using the momentum equation (**Step 1**) and subsequently projected to enforce the divergence constraint (**Step 3**). When considering variable density flows,
+the scalar thermodynamic advance is performed between these two steps (**Step 2**), but within the SDC context, **Step 1** and **Step 2** are effectively interlaced.
+The three major steps of the algorithm (Almgren et al 1998, Day et al, 2000):
 
 **Step 1**: (*Compute advection velocities*) Use a second-order Godunov procedure to predict a time-centered
 velocity, :math:`U^{{\rm ADV},*}`, on cell faces using the cell-centered data (plus sources due to any auxiliary forcing) at :math:`t^n`,
@@ -200,12 +201,11 @@ by solving the elliptic equation with a time-centered source term:
 .. math::
 
     D^{{\rm FC}\rightarrow{\rm CC}}\frac{1}{\rho^n}G^{{\rm CC}\rightarrow{\rm FC}}\phi
-    = D^{{\rm FC}\rightarrow{\rm CC}}U^{{\rm ADV},*} - \left(\widehat S^n
-    + \frac{\Delta t^n}{2}\frac{\widehat S^n - \widehat S^{n-1}}{\Delta t^{n-1}}\right),
+    = D^{{\rm FC}\rightarrow{\rm CC}}U^{{\rm ADV},*} - S^{MAC}
 
 for :math:`\phi` at cell-centers, where :math:`D^{{\rm FC}\rightarrow{\rm CC}}` represents a cell-centered divergence of face-centered data,
 and :math:`G^{{\rm CC}\rightarrow{\rm FC}}` represents a face-centered gradient of cell-centered data, and :math:`\rho^n` is computed on
-cell faces using arithmetic averaging from neighboring cell centers.  Also, :math:`\widehat S` refers to the RHS of the constraint
+cell faces using arithmetic averaging from neighboring cell centers.  Also, :math:`S^{MAC}` refers to the RHS of the constraint
 equation, with adjustments to be discussed in the next section -- these adjustments are computed to ensure that the final update 
 satisfied the equation of state. The solution, :math:`\phi`, is then used to define
 
@@ -218,14 +218,30 @@ field at :math:`t^{n+1/2}` that discretely satisfies the constraint.  This field
 the time-explicit advective fluxes for :math:`U`, :math:`\rho h`, and :math:`\rho Y_m`.
 
 
-**Step 2**: (*Advance thermodynamic variables*) Integrate :math:`(\rho Y_m,\rho h)` over the full time step using a spectral deferred correction (SDC) appraoch, the details of which can be found in `PeleLM documentation <https://amrex-combustion.github.io/PeleLM/manual/html/Model.html#sdc-preliminaries>`_.
+**Step 2**: (*Advance thermodynamic variables*) Integrate :math:`(\rho Y_m,\rho h)` over the full time step using a spectral deferred correction (SDC) appraoch, the details of which can be found in `PeleLM documentation <https://amrex-combustion.github.io/PeleLM/manual/html/Model.html#sdc-preliminaries>`_. An even more detailed version of the algorithm is available in Nonaka *et al.*, 2018. 
 
-* We begin by computing the diffusion operators at :math:`t^n` that will be needed throughout the SDC iteration. Specifically, we evaluate the transport coefficients
-:math:`(\lambda,C_p,\mathcal D_m,h_m)^n` from :math:`(Y_m,T)^n`, and the provisional diffusion fluxes, :math:`\widetilde{\boldsymbol{\cal F}}_m^n`.  These fluxes are conservatively corrected (i.e., adjusted to sum to zero by adding a mass-weighted "correction velocity") to obtain :math:`{\boldsymbol{\cal F}}_m^n` such that :math:`\sum {\boldsymbol{\cal F}}_m^n = 0`.
-Finally, we copy the transport coefficients, diffusion fluxes and the thermodynamic state from :math:`t^n` as starting values for
-:math:`t^{n+1}`, and initialize the reaction terms, :math:`I_R` from the values used in the previous step.
+* We begin by computing the diffusion terms :math:`D^n` at :math:`t^n` that will be needed throughout the SDC iterations. Specifically, we evaluate the transport coefficients :math:`(\lambda,C_p,\mathcal D_m,h_m)^n` from :math:`(Y_m,T)^n`, and the provisional diffusion fluxes, :math:`\widetilde{\boldsymbol{\cal F}}_m^n`.  These fluxes are conservatively corrected (i.e., adjusted to sum to zero by adding a mass-weighted "correction velocity") to obtain :math:`{\boldsymbol{\cal F}}_m^n` such that :math:`\sum {\boldsymbol{\cal F}}_m^n = 0`. Finally, we copy the transport coefficients, diffusion fluxes and the thermodynamic state from :math:`t^n` as starting values for :math:`t^{n+1,(k=0)}`, and initialize the reaction terms, :math:`I_R` from the values used in the previous step.
 
-* The following sequence is then repeated for each iteration, :math:`k<k_{max}`
+* The following sequence is then repeated for each iteration :math:`k<k_{max}` starting at :math:`k=0`:
+
+    #. if :math:`k>0`, compute the lagged (previous :math:`k` iteration) transport properties, diffusion terms :math:`D^{n+1,(k)}` and divergence constraint :math:`\widehat S^{n+1,(k)}`
+
+    #. construct the *MAC*-projection RHS :math:`S^{MAC}`, combining :math:`t^n` and :math:`t^{n+1,(k)` estimates of :math:`\widehat S`, and the pressure correction :math:`\chi` (Nonaka *et al*, 2018):
+
+.. math::
+
+    S^{MAC} = \frac{1}{2}(\widehat S^n + \widehat S^{n+1,(k)}) + \sum_{i=0}^k \frac{1}{p_{them}^{n+1,i}}\frac{p_{them}^{n+1,i}-p_0}{\Delta t}
+
+
+    #. Perform **Step 1** to obtain the time-centered, stagered :math:`U^{ADV}`
+
+    #. Use a second-order Godunov integrator to predict species time-centered edge states, :math:`(\rho Y_m)^{n+1/2,(k+1)}` and their advection terms at :math:`t^{n+1/2}`, :math:`(A_m^{n+1/2,(k+1)})`. Source terms for this prediction include explicit diffusion forcing, :math:`D^{n}`, and an iteration-lagged reaction term, :math:`I_R^{(k)}`. Since the remaining steps of the algorithm for this iteration (including diffusion and chemistry advances) will not affect the new-time density for this iteration, we can already compute :math:`\rho^{n+1,(k+1)}`. This will be needed in the trapezoidal-in-time diffusion solves. 
+    
+.. math::
+
+    \frac{\rho^{n+1,(k+1)} - \rho^n}{\Delta t} = A_{\rho}^{n+1/2,(k+1)} = \sum A_{m}^{n+1/2,(k+1)}
+    = -\sum_m\nabla\cdot\left(U^{\rm ADV}\rho Y_m\right)^{n+1/2,(k+1)}.
+
 
 **Step 3**: (*Advance the velocity*) Compute an intermediate cell-centered velocity field, :math:`U^{n+1,*}` using the lagged pressure 
 gradient, by solving
