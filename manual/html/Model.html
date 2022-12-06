@@ -251,14 +251,13 @@ the time-explicit advective fluxes for <span class="math notranslate nohighlight
 <blockquote>
 <div><ol class="arabic simple">
 <li><p>if <span class="math notranslate nohighlight">\(k&gt;0\)</span>, compute the lagged (previous <span class="math notranslate nohighlight">\(k\)</span> iteration) transport properties, diffusion terms <span class="math notranslate nohighlight">\(D^{n+1,(k)}\)</span> and divergence constraint <span class="math notranslate nohighlight">\(\widehat S^{n+1,(k)}\)</span></p></li>
-<li><p>construct the <em>MAC</em>-projection RHS <span class="math notranslate nohighlight">\(S^{MAC}\)</span>, combining <span class="math notranslate nohighlight">\(t^n\)</span> and <span class="math notranslate nohighlight">\(t^{n+1,(k)\)</span> estimates of <span class="math notranslate nohighlight">\(\widehat S\)</span>, and the pressure correction <span class="math notranslate nohighlight">\(\chi\)</span> (Nonaka <em>et al</em>, 2018):</p></li>
+<li><p>construct the <em>MAC</em>-projection RHS <span class="math notranslate nohighlight">\(S^{MAC}\)</span>, combining <span class="math notranslate nohighlight">\(t^n\)</span> and <span class="math notranslate nohighlight">\(t^{n+1,(k)}\)</span> estimates of <span class="math notranslate nohighlight">\(\widehat S\)</span>, and the pressure correction <span class="math notranslate nohighlight">\(\chi\)</span> (Nonaka <em>et al</em>, 2018):</p></li>
 </ol>
 </div></blockquote>
 </li>
 </ul>
 <div class="math notranslate nohighlight">
-\[ \begin{align}\begin{aligned}S^{MAC} = \frac{1}{2}(\widehat S^n + \widehat S^{n+1,(k)}) + \sum_{i=0}^k \frac{1}{p_{them}^{n+1,i}}\frac{p_{them}^{n+1,i}-p_0}{\Delta t}\\
-#. Perform **Step 1** to obtain the time-centered, stagered :math:`U^{ADV}`\\#. Use a second-order Godunov integrator to predict species time-centered edge states, :math:`(\rho Y_m)^{n+1/2,(k+1)}` and their advection terms at :math:`t^{n+1/2}`, :math:`(A_m^{n+1/2,(k+1)})`. Source terms for this prediction include explicit diffusion forcing, :math:`D^{n}`, and an iteration-lagged reaction term, :math:`I_R^{(k)}`. Since the remaining steps of the algorithm for this iteration (including diffusion and chemistry advances) will not affect the new-time density for this iteration, we can already compute :math:`\rho^{n+1,(k+1)}`. This will be needed in the trapezoidal-in-time diffusion solves.\end{aligned}\end{align} \]</div>
+\[S^{MAC} = \frac{1}{2}(\widehat S^n + \widehat S^{n+1,(k)}) + \sum_{i=0}^k \frac{1}{p_{them}^{n+1,i}}\frac{p_{them}^{n+1,i}-p_0}{\Delta t}\]</div>
 <div class="math notranslate nohighlight">
 \[\frac{\rho^{n+1,(k+1)} - \rho^n}{\Delta t} = A_{\rho}^{n+1/2,(k+1)} = \sum A_{m}^{n+1/2,(k+1)}
 = -\sum_m\nabla\cdot\left(U^{\rm ADV}\rho Y_m\right)^{n+1/2,(k+1)}.\]</div>
