@@ -14,27 +14,23 @@ setup and control of `PeleLMeX` in later sections.
 Overview of `PeleLMeX`
 ----------------------
 
-PeleLMeX is the non-subcycling version of `PeleLM <https://amrex-combustion.github.io/PeleLM/>`_ a parallel,
+`PeleLMeX` is the non-subcycling version of `PeleLM <https://amrex-combustion.github.io/PeleLM/>`_ a parallel,
 adaptive mesh refinement (AMR) code that solves the reacting Navier-Stokes equations in the low Mach number regime.
 
-The core libraries for managing the AMR grids and communications are found in the  
-`AMReX source code <https://amrex-codes.github.io/amrex/>`_. In a nutshell, PeleLMeX features include:
+In a nutshell, `PeleLMeX` features include:
+
 * Software :
    * Written in C++
    * Parallelization using MPI+X appraoch, with X one of OpenMP, CUDA, HIP or SYCL
    * Parallel I/O
    * Built-in profiling tools
-   * Plotfile format supported by 
-      `Amrvis <https://github.com/AMReX-Codes/Amrvis/>`_,
-      `yt <http://yt-project.org/>`_,
-      `Paraview <https://www.paraview.org/>`_
+   * Plotfile format supported by `Amrvis <https://github.com/AMReX-Codes/Amrvis/>`_, `yt <http://yt-project.org/>`_, `Paraview <https://www.paraview.org/>`_
 * Physics & numerics :
    * Finite volume, block-structured AMR appraoch
    * 2D-Cartesian, 2D-Axisymmetric and 3D support
    * Combustion (transport, kinetics, thermodynamics) models based on Cantera and EGLib through `PelePhysics <https://github.com/AMReX-Combustion/PelePhysics>`_
    * Second-order projection methodology for enforcing the low Mach number constraint
-   * Time advance based on a spectral-deferred corrections approach that conserves
-      species mass and energy and evolves on the equation of state
+   * Time advance based on a spectral-deferred corrections approach that conserves species mass and energy and evolves on the equation of state
    * Several higher-order Godunov integration schemes for advection
    * Temporally implicit viscosity, species mass diffusion, thermal conductivity, chemical kinetics
    * Closed chamber algorithm enable time-varying background pressure changes
@@ -183,14 +179,13 @@ Low Mach number projection scheme
 of the grid, and is temporally constant on the intervals over the time step.
 The projection scheme is based on a fractional step appraoch where, for purely incompressible flow, the velocity is first advanced in time
 using the momentum equation and subsequently projected to enforce the divergence constraint. When considering variable density flows,
-the thermodynamic advance of the is performed between these two steps. The three major steps of the algorithm (Almgren, et al 1998):
+the thermodynamic advance of the is performed between these two steps. The three major steps of the algorithm (Almgren et al 1998, Day et al, 2000):
 
 **Step 1**: (*Compute advection velocities*) Use a second-order Godunov procedure to predict a time-centered
 velocity, :math:`U^{{\rm ADV},*}`, on cell faces using the cell-centered data (plus sources due to any auxiliary forcing) at :math:`t^n`,
 and the lagged pressure gradient from the previous time interval, which we denote as :math:`\nabla \pi^{n-1/2}`.  
-The provisional field, :math:`U^{{\rm ADV},*}`, fails to 
-satisfy the divergence constraint.  We apply a discrete projection by solving the elliptic equation
-with a time-centered source term:
+This provisional field, :math:`U^{{\rm ADV},*}`, fails to satisfy the divergence constraint.  We apply a discrete projection (termed *MAC*-projection)
+by solving the elliptic equation with a time-centered source term:
 
 .. math::
 
@@ -201,16 +196,64 @@ with a time-centered source term:
 for :math:`\phi` at cell-centers, where :math:`D^{{\rm FC}\rightarrow{\rm CC}}` represents a cell-centered divergence of face-centered data,
 and :math:`G^{{\rm CC}\rightarrow{\rm FC}}` represents a face-centered gradient of cell-centered data, and :math:`\rho^n` is computed on
 cell faces using arithmetic averaging from neighboring cell centers.  Also, :math:`\widehat S` refers to the RHS of the constraint
-equation, with adjustments to be discussed in the next section -- these adjustments are computed to ensure that the final update satisfied the equation of state. The solution, :math:`\phi`, is then used to define
+equation, with adjustments to be discussed in the next section -- these adjustments are computed to ensure that the final update 
+satisfied the equation of state. The solution, :math:`\phi`, is then used to define
 
 .. math::
 
     U^{\rm ADV} = U^{{\rm ADV},*} - \frac{1}{\rho^n}G^{{\rm CC}\rightarrow{\rm FC}}\phi,
 
-After the *MAC*-projection, :math:`U^{\rm ADV}` is a second-order accurate, staggered grid vector
+After the *MAC*-projection, :math:`U^{\rm ADV}` is a second-order accurate, staggered (face-centered) grid vector
 field at :math:`t^{n+1/2}` that discretely satisfies the constraint.  This field is the advection velocity used for computing
 the time-explicit advective fluxes for :math:`U`, :math:`\rho h`, and :math:`\rho Y_m`.
 
+
+**Step 2**: (*Advance thermodynamic variables*) Integrate :math:`(\rho Y_m,\rho h)` over the full time step.  The details of 
+this are presented in the next subsection.
+
+**Step 3**: (*Advance the velocity*) Compute an intermediate cell-centered velocity field, :math:`U^{n+1,*}` using the lagged pressure 
+gradient, by solving
+
+.. math::
+
+    \rho^{n+1/2}\frac{U^{n+1,*}-U^n}{\Delta t}
+    + \rho^{n+1/2}\left(U^{\rm ADV}\cdot\nabla U\right)^{n+1/2} = \\
+    \frac{1}{2}\left(\nabla\cdot\tau^n
+    + \nabla\cdot\tau^{n+1,*}\right) - \nabla\pi^{n-1/2} + \frac{1}{2}(F^n + F^{n+1}),
+
+where :math:`\tau^{n+1,*} = \mu^{n+1}[\nabla U^{n+1,*} +(\nabla U^{n+1,*})^T - 2\mathcal{I}\widehat S^{n+1}/3]` and 
+:math:`\rho^{n+1/2} = (\rho^n + \rho^{n+1})/2`, and :math:`F` is the velocity forcing.  This is a semi-implicit discretization for :math:`U`, requiring
+a linear solve that couples together all velocity components.  The time-centered velocity in the advective derivative,
+:math:`U^{n+1/2}`, is computed in the same way as :math:`U^{{\rm ADV},*}`, but also includes the viscous stress tensor 
+evaluated at :math:`t^n` as a source term in the Godunov integrator.  At 
+this point, the intermediate velocity field :math:`U^{n+1,*}` does not satisfy the constraint.  Hence, we apply an 
+approximate projection to update the pressure and to project :math:`U^{n+1,*}` onto the constraint surface.  
+In particular, we compute :math:`\widehat S^{n+1}` from the new-time 
+thermodynamic variables and an estimate of :math:`\dot\omega_m^{n+1}`, which is evaluated
+directly from the new-time thermodynamic variables. We project the new-time velocity by solving the elliptic equation,
+
+.. math::
+
+    L^{{\rm N}\rightarrow{\rm N}}\phi = D^{{\rm CC}\rightarrow{\rm N}}\left(U^{n+1,*}
+    + \frac{\Delta t}{\rho^{n+1/2}}G^{{\rm N}\rightarrow{\rm CC}}\pi^{n-1/2}\right) - \widehat S^{n+1}
+
+for nodal values of :math:`\phi`.  Here, :math:`L^{{\rm N}\rightarrow{\rm N}}` represents a nodal Laplacian of nodal data, computed
+using the standard bilinear finite-element approximation to :math:`\nabla\cdot(1/\rho^{n+1/2})\nabla`.
+Also, :math:`D^{{\rm CC}\rightarrow{\rm N}}` is a discrete second-order operator that approximates the divergence at nodes from cell-centered data 
+and :math:`G^{{\rm N}\rightarrow{\rm CC}}` approximates a cell-centered gradient from nodal data. Nodal 
+values for :math:`\widehat S^{n+1}` required for this equation are obtained by interpolating the cell-centered values. Finally, we 
+determine the new-time cell-centered velocity field using
+
+.. math::
+
+    U^{n+1} = U^{n+1,*} - \frac{\Delta t}{\rho^{n+1/2}}G^{{\rm N}\rightarrow{\rm CC}}(\phi-\pi^{n-1/2}),
+
+and the new time-centered pressure using :math:`\pi^{n+1/2} = \phi`.
+
+Thus, there are three different types of linear solves required to advance the velocity field.  The first is the *MAC* solve 
+in order to obtain *face-centered* velocities used to compute advective fluxes. The second is the multi-component *cell-centered* solver 
+is used to obtain the provisional new-time velocities. Finally, a *nodal* solver is used to project the provisional new-time velocities so 
+that they satisfy the constraint.
 
 Temporal integration
 ^^^^^^^^^^^^^^^^^^^^
