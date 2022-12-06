@@ -263,16 +263,13 @@ the time-explicit advective fluxes for <span class="math notranslate nohighlight
 \[\frac{\rho^{n+1,(k+1)}\widetilde Y_{m,{\rm AD}}^{n+1,(k+1)} - (\rho Y_m)^n}{\Delta t} = A_m^{{n+1/2,(k+1)}} + \widetilde D_{m,AD}^{n+1,(k+1)} + \frac{1}{2}(D_m^n - D_m^{n+1,(k)}) + I_{R,m}^{(k)}\]</div>
 <p>The resulting <span class="math notranslate nohighlight">\(\rho^{n+1,(k+1)}\widetilde Y_{m,{\rm AD}}^{n+1,(k+1)}\)</span> are used to compute the implicit (conservatively-corrected) species diffusion fluxes and implicit diffusion term <span class="math notranslate nohighlight">\(D_{m,AD}^{n+1,(k+1)}\)</span>, which is employed to get a final AD updated <span class="math notranslate nohighlight">\(\rho^{n+1,(k+1)}\widetilde Y_{m,{\rm AD}}^{n+1,(k+1)}\)</span>. Next, we compute the time-advanced enthalpy, <span class="math notranslate nohighlight">\(h_{\rm AD}^{n+1,(k+1)}\)</span>.  Much like for the diffusion of the <span class="math notranslate nohighlight">\(\rho Y_m\)</span>, the <span class="math notranslate nohighlight">\(\nabla T\)</span> driving force leads to a nonlinear, coupled Crank-Nicolson update for <span class="math notranslate nohighlight">\(\rho h\)</span>. We define an alternative linearized strategy by following the same SDC-correction formalism used for the species, and write the nonlinear update for <span class="math notranslate nohighlight">\(\rho h\)</span> (noting that there is no reaction source term here):</p>
 <div class="math notranslate nohighlight">
-\[\frac{\rho^{n+1,(k+1)} h_{{\rm AD}}^{n+1,(k+1)} - (\rho h)^n}{\Delta t} = A_h^{n+1/2,(k+1)} + D_{T,AD}^{n+1,(k+1)} + H_{AD}^{n+1,(k+1)}
-+ \frac{1}{2} \Big( D_T^n - D_T^{n+1,(k)} + H^n - H^{n+1,(k)} \Big)
-:label: SDCrhoH\]</div>
+\[\begin{split}\frac{\rho^{n+1,(k+1)} h_{{\rm AD}}^{n+1,(k+1)} - (\rho h)^n}{\Delta t} = A_h^{n+1/2,(k+1)} + D_{T,AD}^{n+1,(k+1)} + H_{AD}^{n+1,(k+1)} \\
++ \frac{1}{2} \Big( D_T^n - D_T^{n+1,(k)} + H^n - H^{n+1,(k)} \Big)\end{split}\]</div>
 <p>However, since we cannot compute <span class="math notranslate nohighlight">\(h_{{\rm AD}}^{n+1,(k+1)}\)</span> directly, we solve this iteratively based on the approximation <span class="math notranslate nohighlight">\(h_{{\rm AD}}^{(k+1),\ell+1} \approx h_{{\rm AD}}^{(k+1),\ell} + C_{p}^{(k+1),\ell} \delta T^{(k+1),\ell+1}\)</span>, with <span class="math notranslate nohighlight">\(\delta T^{(k+1),\ell+1} = T_{{\rm AD}}^{(k+1),\ell+1} - T_{{\rm AD}}^{(k+1),\ell}\)</span>, and iteration index, <span class="math notranslate nohighlight">\(\ell\)</span> = 1:<span class="math notranslate nohighlight">\(\,\ell_{MAX}\)</span>. The enthalpy update equation is thus recast into a linear equation for <span class="math notranslate nohighlight">\(\delta T^{(k+1);\ell+1}\)</span>:</p>
 <div class="math notranslate nohighlight">
-\[\begin{split}\rho^{n+1,(k+1)} C_p^{(k+1),\ell} \delta T^{(k+1),\ell+1}
-&amp;-&amp; \Delta t \, \nabla \cdot \lambda^{(k)} \nabla (\delta T^{(k+1),\ell +1}) \nonumber  \\
-&amp;=&amp; \rho^n h^n - \rho^{n+1,(k+1)} h_{AD}^{(k+1),\ell} + \Delta t \Big( A_h^{n+1/2,(k+1)} + D_{T,AD}^{(k+1),\ell}
-+ H_{AD}^{(k+1),\ell} \Big) \\
-&amp;&amp;+ \; \frac{\Delta t}{2} \Big( D_T^n - D_T^{n+1,(k)} + H^n - H^{n+1,(k)} \Big) \nonumber\end{split}\]</div>
+\[\begin{split}\rho^{n+1,(k+1)} C_p^{(k+1),\ell} \delta T^{(k+1),\ell+1} -\Delta t \, \nabla \cdot \lambda^{(k)} \nabla (\delta T^{(k+1),\ell +1})  \\
+= \rho^n h^n - \rho^{n+1,(k+1)} h_{AD}^{(k+1),\ell} + \Delta t \Big( A_h^{n+1/2,(k+1)} + D_{T,AD}^{(k+1),\ell} + H_{AD}^{(k+1),\ell} \Big) \\
++ \; \frac{\Delta t}{2} \Big( D_T^n - D_T^{n+1,(k)} + H^n - H^{n+1,(k)} \Big)\end{split}\]</div>
 <p>where <span class="math notranslate nohighlight">\(H_{AD}^{(k+1),\ell} = - \nabla \cdot \sum h_m(T_{AD}^{(k+1),\ell}) \, {\boldsymbol{\cal F}}_{m,AD}^{n+1,(k+1)}\)</span> and <span class="math notranslate nohighlight">\(D_{T,AD}^{(k+1),\ell} = \nabla \cdot \lambda^{(k)} \, \nabla T_{AD}^{(k+1),\ell}\)</span>. After each iteration, update <span class="math notranslate nohighlight">\(T_{{\rm AD}}^{(k+1),\ell+1} = T_{{\rm AD}}^{(k+1),\ell} + \delta T^{(k+1),\ell+1}\)</span> and re-evaluate <span class="math notranslate nohighlight">\((C_p ,h_m)^{(k+1),\ell+1}\)</span> using <span class="math notranslate nohighlight">\((T_{{\rm AD}}^{(k+1),\ell+1}, Y_{m,{\rm AD}}^{n+1,(k+1)}\)</span>).</p>
 </div></blockquote>
 </li>
