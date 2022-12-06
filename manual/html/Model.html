@@ -223,8 +223,9 @@ closely weaved into the fractional step appraoch.</p>
 <span class="math notranslate nohighlight">\(U\)</span>, <span class="math notranslate nohighlight">\(\rho\)</span>, <span class="math notranslate nohighlight">\(\rho Y_m\)</span>, <span class="math notranslate nohighlight">\(\rho h\)</span>, and <span class="math notranslate nohighlight">\(T\)</span> represent cell averages, and the pressure field, <span class="math notranslate nohighlight">\(\pi\)</span>, is defined on the nodes
 of the grid, and is temporally constant on the intervals over the time step.
 The projection scheme is based on a fractional step appraoch where, for purely incompressible flow, the velocity is first advanced in time
-using the momentum equation and subsequently projected to enforce the divergence constraint. When considering variable density flows,
-the thermodynamic advance of the is performed between these two steps. The three major steps of the algorithm (Almgren et al 1998, Day et al, 2000):</p>
+using the momentum equation (<strong>Step 1</strong>) and subsequently projected to enforce the divergence constraint (<strong>Step 3</strong>). When considering variable density flows,
+the scalar thermodynamic advance is performed between these two steps (<strong>Step 2</strong>), but within the SDC context, <strong>Step 1</strong> and <strong>Step 2</strong> are effectively interlaced.
+The three major steps of the algorithm (Almgren et al 1998, Day et al, 2000):</p>
 <p><strong>Step 1</strong>: (<em>Compute advection velocities</em>) Use a second-order Godunov procedure to predict a time-centered
 velocity, <span class="math notranslate nohighlight">\(U^{{\rm ADV},*}\)</span>, on cell faces using the cell-centered data (plus sources due to any auxiliary forcing) at <span class="math notranslate nohighlight">\(t^n\)</span>,
 and the lagged pressure gradient from the previous time interval, which we denote as <span class="math notranslate nohighlight">\(\nabla \pi^{n-1/2}\)</span>.
@@ -232,11 +233,10 @@ This provisional field, <span class="math notranslate nohighlight">\(U^{{\rm ADV
 by solving the elliptic equation with a time-centered source term:</p>
 <div class="math notranslate nohighlight">
 \[D^{{\rm FC}\rightarrow{\rm CC}}\frac{1}{\rho^n}G^{{\rm CC}\rightarrow{\rm FC}}\phi
-= D^{{\rm FC}\rightarrow{\rm CC}}U^{{\rm ADV},*} - \left(\widehat S^n
-+ \frac{\Delta t^n}{2}\frac{\widehat S^n - \widehat S^{n-1}}{\Delta t^{n-1}}\right),\]</div>
+= D^{{\rm FC}\rightarrow{\rm CC}}U^{{\rm ADV},*} - S^{MAC}\]</div>
 <p>for <span class="math notranslate nohighlight">\(\phi\)</span> at cell-centers, where <span class="math notranslate nohighlight">\(D^{{\rm FC}\rightarrow{\rm CC}}\)</span> represents a cell-centered divergence of face-centered data,
 and <span class="math notranslate nohighlight">\(G^{{\rm CC}\rightarrow{\rm FC}}\)</span> represents a face-centered gradient of cell-centered data, and <span class="math notranslate nohighlight">\(\rho^n\)</span> is computed on
-cell faces using arithmetic averaging from neighboring cell centers.  Also, <span class="math notranslate nohighlight">\(\widehat S\)</span> refers to the RHS of the constraint
+cell faces using arithmetic averaging from neighboring cell centers.  Also, <span class="math notranslate nohighlight">\(S^{MAC}\)</span> refers to the RHS of the constraint
 equation, with adjustments to be discussed in the next section – these adjustments are computed to ensure that the final update
 satisfied the equation of state. The solution, <span class="math notranslate nohighlight">\(\phi\)</span>, is then used to define</p>
 <div class="math notranslate nohighlight">
@@ -244,16 +244,24 @@ satisfied the equation of state. The solution, <span class="math notranslate noh
 <p>After the <em>MAC</em>-projection, <span class="math notranslate nohighlight">\(U^{\rm ADV}\)</span> is a second-order accurate, staggered (face-centered) grid vector
 field at <span class="math notranslate nohighlight">\(t^{n+1/2}\)</span> that discretely satisfies the constraint.  This field is the advection velocity used for computing
 the time-explicit advective fluxes for <span class="math notranslate nohighlight">\(U\)</span>, <span class="math notranslate nohighlight">\(\rho h\)</span>, and <span class="math notranslate nohighlight">\(\rho Y_m\)</span>.</p>
-<p><strong>Step 2</strong>: (<em>Advance thermodynamic variables</em>) Integrate <span class="math notranslate nohighlight">\((\rho Y_m,\rho h)\)</span> over the full time step using a spectral deferred correction (SDC) appraoch, the details of which can be found in <a class="reference external" href="https://amrex-combustion.github.io/PeleLM/manual/html/Model.html#sdc-preliminaries">PeleLM documentation</a>.</p>
-<ul class="simple">
-<li><p>We begin by computing the diffusion operators at <span class="math notranslate nohighlight">\(t^n\)</span> that will be needed throughout the SDC iteration. Specifically, we evaluate the transport coefficients</p></li>
+<p><strong>Step 2</strong>: (<em>Advance thermodynamic variables</em>) Integrate <span class="math notranslate nohighlight">\((\rho Y_m,\rho h)\)</span> over the full time step using a spectral deferred correction (SDC) appraoch, the details of which can be found in <a class="reference external" href="https://amrex-combustion.github.io/PeleLM/manual/html/Model.html#sdc-preliminaries">PeleLM documentation</a>. An even more detailed version of the algorithm is available in Nonaka <em>et al.</em>, 2018.</p>
+<ul>
+<li><p>We begin by computing the diffusion terms <span class="math notranslate nohighlight">\(D^n\)</span> at <span class="math notranslate nohighlight">\(t^n\)</span> that will be needed throughout the SDC iterations. Specifically, we evaluate the transport coefficients <span class="math notranslate nohighlight">\((\lambda,C_p,\mathcal D_m,h_m)^n\)</span> from <span class="math notranslate nohighlight">\((Y_m,T)^n\)</span>, and the provisional diffusion fluxes, <span class="math notranslate nohighlight">\(\widetilde{\boldsymbol{\cal F}}_m^n\)</span>.  These fluxes are conservatively corrected (i.e., adjusted to sum to zero by adding a mass-weighted “correction velocity”) to obtain <span class="math notranslate nohighlight">\({\boldsymbol{\cal F}}_m^n\)</span> such that <span class="math notranslate nohighlight">\(\sum {\boldsymbol{\cal F}}_m^n = 0\)</span>. Finally, we copy the transport coefficients, diffusion fluxes and the thermodynamic state from <span class="math notranslate nohighlight">\(t^n\)</span> as starting values for <span class="math notranslate nohighlight">\(t^{n+1,(k=0)}\)</span>, and initialize the reaction terms, <span class="math notranslate nohighlight">\(I_R\)</span> from the values used in the previous step.</p></li>
+<li><p>The following sequence is then repeated for each iteration <span class="math notranslate nohighlight">\(k&lt;k_{max}\)</span> starting at <span class="math notranslate nohighlight">\(k=0\)</span>:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>if <span class="math notranslate nohighlight">\(k&gt;0\)</span>, compute the lagged (previous <span class="math notranslate nohighlight">\(k\)</span> iteration) transport properties, diffusion terms <span class="math notranslate nohighlight">\(D^{n+1,(k)}\)</span> and divergence constraint <span class="math notranslate nohighlight">\(\widehat S^{n+1,(k)}\)</span></p></li>
+<li><p>construct the <em>MAC</em>-projection RHS <span class="math notranslate nohighlight">\(S^{MAC}\)</span>, combining <span class="math notranslate nohighlight">\(t^n\)</span> and <span class="math notranslate nohighlight">\(t^{n+1,(k)\)</span> estimates of <span class="math notranslate nohighlight">\(\widehat S\)</span>, and the pressure correction <span class="math notranslate nohighlight">\(\chi\)</span> (Nonaka <em>et al</em>, 2018):</p></li>
+</ol>
+</div></blockquote>
+</li>
 </ul>
-<p><span class="math notranslate nohighlight">\((\lambda,C_p,\mathcal D_m,h_m)^n\)</span> from <span class="math notranslate nohighlight">\((Y_m,T)^n\)</span>, and the provisional diffusion fluxes, <span class="math notranslate nohighlight">\(\widetilde{\boldsymbol{\cal F}}_m^n\)</span>.  These fluxes are conservatively corrected (i.e., adjusted to sum to zero by adding a mass-weighted “correction velocity”) to obtain <span class="math notranslate nohighlight">\({\boldsymbol{\cal F}}_m^n\)</span> such that <span class="math notranslate nohighlight">\(\sum {\boldsymbol{\cal F}}_m^n = 0\)</span>.
-Finally, we copy the transport coefficients, diffusion fluxes and the thermodynamic state from <span class="math notranslate nohighlight">\(t^n\)</span> as starting values for
-<span class="math notranslate nohighlight">\(t^{n+1}\)</span>, and initialize the reaction terms, <span class="math notranslate nohighlight">\(I_R\)</span> from the values used in the previous step.</p>
-<ul class="simple">
-<li><p>The following sequence is then repeated for each iteration, <span class="math notranslate nohighlight">\(k&lt;k_{max}\)</span></p></li>
-</ul>
+<div class="math notranslate nohighlight">
+\[ \begin{align}\begin{aligned}S^{MAC} = \frac{1}{2}(\widehat S^n + \widehat S^{n+1,(k)}) + \sum_{i=0}^k \frac{1}{p_{them}^{n+1,i}}\frac{p_{them}^{n+1,i}-p_0}{\Delta t}\\
+#. Perform **Step 1** to obtain the time-centered, stagered :math:`U^{ADV}`\\#. Use a second-order Godunov integrator to predict species time-centered edge states, :math:`(\rho Y_m)^{n+1/2,(k+1)}` and their advection terms at :math:`t^{n+1/2}`, :math:`(A_m^{n+1/2,(k+1)})`. Source terms for this prediction include explicit diffusion forcing, :math:`D^{n}`, and an iteration-lagged reaction term, :math:`I_R^{(k)}`. Since the remaining steps of the algorithm for this iteration (including diffusion and chemistry advances) will not affect the new-time density for this iteration, we can already compute :math:`\rho^{n+1,(k+1)}`. This will be needed in the trapezoidal-in-time diffusion solves.\end{aligned}\end{align} \]</div>
+<div class="math notranslate nohighlight">
+\[\frac{\rho^{n+1,(k+1)} - \rho^n}{\Delta t} = A_{\rho}^{n+1/2,(k+1)} = \sum A_{m}^{n+1/2,(k+1)}
+= -\sum_m\nabla\cdot\left(U^{\rm ADV}\rho Y_m\right)^{n+1/2,(k+1)}.\]</div>
 <p><strong>Step 3</strong>: (<em>Advance the velocity</em>) Compute an intermediate cell-centered velocity field, <span class="math notranslate nohighlight">\(U^{n+1,*}\)</span> using the lagged pressure
 gradient, by solving</p>
 <div class="math notranslate nohighlight">
