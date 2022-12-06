@@ -172,12 +172,14 @@ and simplified velocity constraint,
 PeleLMeX Algorithm
 ------------------
 
-An overview of `PeleLMeX` time-advance function is provided in Fig. and details are provided in the following subsections.
+An overview of `PeleLMeX` time-advance function is provided in the figure below and details are provided in the following subsections.
 
 .. figure:: images/model/PeleLMeX_Algorithm.png
    :align: center
-   :figwidth: 50%
+   :figwidth: 70%
 
+The three steps of the low Mach number projection scheme are highlighted to better emphasize how the thermodynamic solve is 
+closely weaved into the fractional step appraoch.
 
 Low Mach number projection scheme
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -216,8 +218,14 @@ field at :math:`t^{n+1/2}` that discretely satisfies the constraint.  This field
 the time-explicit advective fluxes for :math:`U`, :math:`\rho h`, and :math:`\rho Y_m`.
 
 
-**Step 2**: (*Advance thermodynamic variables*) Integrate :math:`(\rho Y_m,\rho h)` over the full time step.  The details of 
-this are presented in the next subsection.
+**Step 2**: (*Advance thermodynamic variables*) Integrate :math:`(\rho Y_m,\rho h)` over the full time step using a spectral deferred correction (SDC) appraoch, the details of which can be found in `PeleLM documentation <https://amrex-combustion.github.io/PeleLM/manual/html/Model.html#sdc-preliminaries>`_.
+
+* We begin by computing the diffusion operators at :math:`t^n` that will be needed throughout the SDC iteration. Specifically, we evaluate the transport coefficients
+:math:`(\lambda,C_p,\mathcal D_m,h_m)^n` from :math:`(Y_m,T)^n`, and the provisional diffusion fluxes, :math:`\widetilde{\boldsymbol{\cal F}}_m^n`.  These fluxes are conservatively corrected (i.e., adjusted to sum to zero by adding a mass-weighted "correction velocity") to obtain :math:`{\boldsymbol{\cal F}}_m^n` such that :math:`\sum {\boldsymbol{\cal F}}_m^n = 0`.
+Finally, we copy the transport coefficients, diffusion fluxes and the thermodynamic state from :math:`t^n` as starting values for
+:math:`t^{n+1}`, and initialize the reaction terms, :math:`I_R` from the values used in the previous step.
+
+* The following sequence is then repeated for each iteration, :math:`k<k_{max}`
 
 **Step 3**: (*Advance the velocity*) Compute an intermediate cell-centered velocity field, :math:`U^{n+1,*}` using the lagged pressure 
 gradient, by solving
