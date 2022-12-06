@@ -29,6 +29,7 @@ In a nutshell, `PeleLMeX` features include:
    * Finite volume, block-structured AMR appraoch
    * 2D-Cartesian, 2D-Axisymmetric and 3D support
    * Combustion (transport, kinetics, thermodynamics) models based on Cantera and EGLib through `PelePhysics <https://github.com/AMReX-Combustion/PelePhysics>`_
+   * Complex geometries using Embedded Boundaries (EB)
    * Second-order projection methodology for enforcing the low Mach number constraint
    * Time advance based on a spectral-deferred corrections approach that conserves species mass and energy and evolves on the equation of state
    * Several higher-order Godunov integration schemes for advection
@@ -171,6 +172,13 @@ and simplified velocity constraint,
 PeleLMeX Algorithm
 ------------------
 
+An overview of `PeleLMeX` time-advance function is provided in Fig. and details are provided in the following subsections.
+
+.. figure:: images/model/PeleLMeX_Algorithm.pdf
+   :align: center
+   :figwidth: 50%
+
+
 Low Mach number projection scheme
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -260,6 +268,9 @@ Temporal integration
 
 Advection schemes
 ^^^^^^^^^^^^^^^^^
+
+AMR extension
+^^^^^^^^^^^^^
 
 Geometry with Embedded Boundaries
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
