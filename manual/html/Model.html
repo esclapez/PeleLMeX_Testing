@@ -54,6 +54,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#low-mach-number-projection-scheme">Low Mach number projection scheme</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#temporal-integration">Temporal integration</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#advection-schemes">Advection schemes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#amr-extension">AMR extension</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#geometry-with-embedded-boundaries">Geometry with Embedded Boundaries</a></li>
 </ul>
 </li>
@@ -117,6 +118,7 @@ adaptive mesh refinement (AMR) code that solves the reacting Navier-Stokes equat
 <li><p>Finite volume, block-structured AMR appraoch</p></li>
 <li><p>2D-Cartesian, 2D-Axisymmetric and 3D support</p></li>
 <li><p>Combustion (transport, kinetics, thermodynamics) models based on Cantera and EGLib through <a class="reference external" href="https://github.com/AMReX-Combustion/PelePhysics">PelePhysics</a></p></li>
+<li><p>Complex geometries using Embedded Boundaries (EB)</p></li>
 <li><p>Second-order projection methodology for enforcing the low Mach number constraint</p></li>
 <li><p>Time advance based on a spectral-deferred corrections approach that conserves species mass and energy and evolves on the equation of state</p></li>
 <li><p>Several higher-order Godunov integration schemes for advection</p></li>
@@ -209,6 +211,10 @@ adaptive mesh refinement (AMR) code that solves the reacting Navier-Stokes equat
 </section>
 <section id="pelelmex-algorithm">
 <h2>PeleLMeX Algorithm<a class="headerlink" href="#pelelmex-algorithm" title="Permalink to this heading"></a></h2>
+<p>An overview of <cite>PeleLMeX</cite> time-advance function is provided in Fig. and details are provided in the following subsections.</p>
+<figure class="align-center" style="width: 50%">
+<img alt="_images/PeleLMeX_Algorithm.pdf" src="_images/PeleLMeX_Algorithm.pdf" />
+</figure>
 <section id="low-mach-number-projection-scheme">
 <h3>Low Mach number projection scheme<a class="headerlink" href="#low-mach-number-projection-scheme" title="Permalink to this heading"></a></h3>
 <p><cite>PeleLMeX</cite> implements a finite-volume, Cartesian grid discretization approach with constant grid spacing, where
@@ -277,6 +283,9 @@ that they satisfy the constraint.</p>
 </section>
 <section id="advection-schemes">
 <h3>Advection schemes<a class="headerlink" href="#advection-schemes" title="Permalink to this heading"></a></h3>
+</section>
+<section id="amr-extension">
+<h3>AMR extension<a class="headerlink" href="#amr-extension" title="Permalink to this heading"></a></h3>
 </section>
 <section id="geometry-with-embedded-boundaries">
 <h3>Geometry with Embedded Boundaries<a class="headerlink" href="#geometry-with-embedded-boundaries" title="Permalink to this heading"></a></h3>
