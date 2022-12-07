@@ -214,8 +214,8 @@ adaptive mesh refinement (AMR) code that solves the reacting Navier-Stokes equat
 <figure class="align-center" style="width: 70%">
 <img alt="_images/PeleLMeX_Algorithm.png" src="_images/PeleLMeX_Algorithm.png" />
 </figure>
-<p>The three steps of the low Mach number projection scheme described in Section <a href="#id4"><span class="problematic" id="id5">`_ssec:projScheme`_</span></a> are referenced to better emphasize how the thermodynamic solve is
-closely weaved into the fractional step appraoch. Striped boxes indicate where the Godunov procedure described in Section <a href="#id6"><span class="problematic" id="id7">`_ssec:advScheme`_</span></a> is employed while
+<p>The three steps of the low Mach number projection scheme described in Section <a class="reference internal" href="#ssec-projscheme">ssec:projScheme</a> are referenced to better emphasize how the thermodynamic solve is
+closely weaved into the fractional step appraoch. Striped boxes indicate where the Godunov procedure described in Section <a class="reference internal" href="#ssec-advscheme">ssec:advScheme</a> is employed while
 the four different linear solves are highlighted.</p>
 <section id="low-mach-number-projection-scheme">
 <h3>Low Mach number projection scheme<a class="headerlink" href="#low-mach-number-projection-scheme" title="Permalink to this heading"></a></h3>
@@ -322,21 +322,14 @@ that they satisfy the constraint.</p>
 </section>
 <section id="advection-schemes">
 <h3>Advection schemes<a class="headerlink" href="#advection-schemes" title="Permalink to this heading"></a></h3>
-<p><cite>PeleLMeX</cite> relies on the <a class="reference external" href="https://github.com/AMReX-Codes/AMReX-Hydro">AMReX-Hydro</a> implementation of the 2nd-order Godunov method,
-with several variants available. The basis of the Godunov appraoch is to extrapolate the cell-centered quantity of interest (<span class="math notranslate nohighlight">\(U\)</span>, <span class="math notranslate nohighlight">\(\rho Y\)</span>, …)</p>
-<blockquote>
-<div><p>to cell faces using a second-order Taylor series expansion in space and time. As detailed in <a class="reference external" href="https://amrex-codes.github.io/amrex/hydro_html/Schemes.html#godunov-methodsThe">AMReX-Hydro documentation</a>, the choice of the slope order and limiting scheme define the exact variant of the Godunov method.</p>
-</div></blockquote>
-<p>Of particular interest for combustion applications, where sharp gradients of intermediate chemical species are found within the flame front,
-the <cite>Godunov_BDS</cite> appraoch provide a bound-preserving advection scheme which greatly limit the appearance of over-/under-shoot, often leading to
-critical failure of the stiff chemical kinetic integration.</p>
+<p><cite>PeleLMeX</cite> relies on the <a class="reference external" href="https://github.com/AMReX-Codes/AMReX-Hydro">AMReX-Hydro</a> implementation of the 2nd-order Godunov method, with several variants available. The basis of the Godunov appraoch is to extrapolate the cell-centered quantity of interest (<span class="math notranslate nohighlight">\(U\)</span>, <span class="math notranslate nohighlight">\(\rho Y\)</span>, <span class="math notranslate nohighlight">\(\rho h\)</span>) to cell faces using a second-order Taylor series expansion in space and time. As detailed in <a class="reference external" href="https://amrex-codes.github.io/amrex/hydro_html/Schemes.html#godunov-methodsThe">AMReX-Hydro documentation</a>, the choice of the slope order and limiting scheme define the exact variant of the Godunov method. Of particular interest for combustion applications, where sharp gradients of intermediate chemical species are found within the flame front, the <cite>Godunov_BDS</cite> appraoch provide a bound-preserving advection scheme which greatly limit the appearance of over-/under-shoot, often leading to critical failure of the stiff chemical kinetic integration.</p>
 <p>Note that in the presence of EB, only the <cite>Godunov_PLM</cite> variant is available.</p>
 </section>
 <section id="amr-extension">
 <h3>AMR extension<a class="headerlink" href="#amr-extension" title="Permalink to this heading"></a></h3>
 <p>In contrast with <a class="reference external" href="https://github.com/AMReX-Combustion/PeleLM">PeleLM</a>, <cite>PeleLMeX</cite> do not rely a on subcycling appraoch to advance the AMR hierarchy.
 This difference is illustrated in the figure below comparing the multi-level time-stepping approach in both codes:</p>
-<figure class="align-center" style="width: 60%">
+<figure class="align-center" style="width: 90%">
 <img alt="_images/PeleLMeX_Subcycling.png" src="_images/PeleLMeX_Subcycling.png" />
 </figure>
 <ul class="simple">
@@ -353,7 +346,7 @@ mesh is uniform and block-structured, but the boundary of the irregular-shaped c
 through this mesh. Each cell in the mesh becomes labeled as regular, cut or covered, and the finite-volume
 based discretization methods traditionally used in AMReX applications need to be modified to incorporate these cell shapes.
 AMReX provides the necessary EB data structures, including volume and area fractions, surface normals and centroids,
-as well as local connectivity information. The fluxes described in Section <a href="#id8"><span class="problematic" id="id9">`_ssec:projScheme`_</span></a> are then modified to account
+as well as local connectivity information. The fluxes described in Section <a class="reference internal" href="#ssec-projscheme">ssec:projScheme</a> are then modified to account
 for the apperture opening between adjacent cells and the additional EB-fluxes are included when constructing the cell flux divergences.</p>
 <p>A common problem arising with EB is the presence of the small cut-cells which can either introduce undesirable constraint on
 the explicit time step size or lead to numerical instabilities if not accounterd for. <cite>PeleLMeX</cite> relies on a combination of
