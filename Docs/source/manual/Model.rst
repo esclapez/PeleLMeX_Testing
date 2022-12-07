@@ -178,11 +178,13 @@ An overview of `PeleLMeX` time-advance function is provided in the figure below 
    :align: center
    :figwidth: 70%
 
-The three steps of the low Mach number projection scheme are highlighted to better emphasize how the thermodynamic solve is 
-closely weaved into the fractional step appraoch.
+The three steps of the low Mach number projection scheme described in Section `_ssec:projScheme`_ are referenced to better emphasize how the thermodynamic solve is 
+closely weaved into the fractional step appraoch. Striped boxes indicate where the Godunov procedure described in Section `_ssec:advScheme`_ is employed while 
+the four different linear solves are highlighted.
 
 Low Mach number projection scheme
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. _ssec:projScheme:
 
 `PeleLMeX` implements a finite-volume, Cartesian grid discretization approach with constant grid spacing, where
 :math:`U`, :math:`\rho`, :math:`\rho Y_m`, :math:`\rho h`, and :math:`T` represent cell averages, and the pressure field, :math:`\pi`, is defined on the nodes
@@ -235,7 +237,7 @@ the time-explicit advective fluxes for :math:`U`, :math:`\rho h`, and :math:`\rh
 
   #. Perform **Step 1** to obtain the time-centered, stagered :math:`U^{ADV}`
 
-  #. Use a second-order Godunov integrator to predict species time-centered edge states, :math:`(\rho Y_m)^{n+1/2,(k+1)}` and their advection terms at :math:`t^{n+1/2}`, :math:`(A_m^{n+1/2,(k+1)})` using :math:`U^{ADV}`. Source terms for this prediction include explicit diffusion forcing, :math:`D^{n}`, and an iteration-lagged reaction term, :math:`I_R^{(k)}`. Since the remaining steps of the algorithm for this iteration (including diffusion and chemistry advances) will not affect the new-time density for this iteration, we can already compute :math:`\rho^{n+1,(k+1)}`. This will be needed in the trapezoidal-in-time diffusion solves. We also compute :math:`\rho h`: we could also use a Godunov scheme, but because :math:`h` contains the heat of formation scaled to an arbitrary reference state, it is not generally monotonic through flames. Also, because the equation of state is generally nonlinear, this will often lead to numerically-generated non-mononoticity in the temperature field. An analytically equivalent approach, based on the fact that temperature should be smoother and monotonic through the flame, is to instead predict temperature with the Godunov scheme to the cell faces directly and use :math:`T`, :math:`\rho = \sum (\rho Y_m)` and :math:`Y_m = (\rho Y_m)/\rho` on the cell faces directly, we can evaluate :math:`h` instead of extrapolating. We can then evaluate the enthalpy advective flux divergence, :math:`A_h^{n+1/2,(k+1)}`, for :math:`\rho h`.
+  #. Use a 2nd Godunov integrator to predict species time-centered edge states, :math:`(\rho Y_m)^{n+1/2,(k+1)}` and their advection terms :math:`(A_m^{n+1/2,(k+1)})` using :math:`U^{ADV}`. Source terms for this prediction include explicit diffusion forcing, :math:`D^{n}`, and an iteration-lagged reaction term, :math:`I_R^{(k)}`. Since the diffusion and chemistry will not affect the new-time density, we can already compute :math:`\rho^{n+1,(k+1)}`. This will be needed in the trapezoidal-in-time diffusion solves. We also compute :math:`(A_h^{n+1/2,(k+1)})`: we could also use a Godunov scheme, but because :math:`h` contains the heat of formation scaled to an arbitrary reference state, it is not generally monotonic through flames. Also, because the equation of state is generally nonlinear, this will often lead to numerically-generated non-mononoticity in the temperature field. Using the fact that temperature should be smoother and monotonic through the flame, we instead predict temperature with the Godunov scheme and use face-centered :math:`T`, :math:`\rho = \sum (\rho Y_m)` and :math:`Y_m = (\rho Y_m)/\rho` to evaluate :math:`h` instead of extrapolating. We can then evaluate the enthalpy advective flux divergence, :math:`A_h^{n+1/2,(k+1)}`, for :math:`\rho h`.
 
   #. We now compute provisional, time-advanced species mass fractions, :math:`\widetilde Y_{m,{\rm AD}}^{n+1,(k+1)}`, by solving a backward Euler type correction equation for the Crank-Nicolson update. Note that the provisional species diffusion fluxes reads :math:`\widetilde{\boldsymbol{\cal F}}_{m,{\rm AD}}^{(k)} = -\rho^n D_{m,mix}^n \nabla \widetilde X_{m,{\rm AD}}^{(k)}`. This expression couples together all of the species mass fractions (:math:`Y_m`) in the update of each, even for the mixture-averaged model. Computationally, it is much more tractable to write this as a diagonal matrix update with a lagged correction by noting that :math:`X_m = (W/W_m)Y_m`. Using the chain rule, :math:`\widetilde{\boldsymbol{\cal F}}_{m,{\rm AD}}^{(k)}` then has components proportional to :math:`\nabla Y_m` and :math:`\nabla W`. The latter is lagged in the iterations, and is typically very small. In the limit of sufficient iterations, diffusion is driven by the true form of the the driving force, :math:`d_m`, but in this form, each iteration involves decoupled diagonal solves (following the SDC formalism used above):
 
@@ -254,11 +256,34 @@ the time-explicit advective fluxes for :math:`U`, :math:`\rho h`, and :math:`\rh
 
     .. math::
     
-       \rho^{n+1,(k+1)} C_p^{(k+1),\ell} \delta T^{(k+1),\ell+1} -\Delta t \, \nabla \cdot \lambda^{(k)} \nabla (\delta T^{(k+1),\ell +1})  \\
-       = \rho^n h^n - \rho^{n+1,(k+1)} h_{AD}^{(k+1),\ell} + \Delta t \Big( A_h^{n+1/2,(k+1)} + D_{T,AD}^{(k+1),\ell} + H_{AD}^{(k+1),\ell} \Big) \\
-       + \; \frac{\Delta t}{2} \Big( D_T^n - D_T^{n+1,(k)} + H^n - H^{n+1,(k)} \Big)
+       \rho^{n+1,(k+1)} C_p^{(k+1),\ell} \delta T^{(k+1),\ell+1} -\Delta t \, \nabla \cdot \lambda^{(k)} \nabla (\delta T^{(k+1),\ell +1}) = \rho^n h^n - \rho^{n+1,(k+1)}  \\
+       h_{AD}^{(k+1),\ell} + \Delta t \Big( A_h^{n+1/2,(k+1)} + D_{T,AD}^{(k+1),\ell} + H_{AD}^{(k+1),\ell} \Big) + \frac{\Delta t}{2} \Big( D_T^n - D_T^{n+1,(k)} + H^n - H^{n+1,(k)} \Big)
 
     where :math:`H_{AD}^{(k+1),\ell} = - \nabla \cdot \sum h_m(T_{AD}^{(k+1),\ell}) \, {\boldsymbol{\cal F}}_{m,AD}^{n+1,(k+1)}` and :math:`D_{T,AD}^{(k+1),\ell} = \nabla \cdot \lambda^{(k)} \, \nabla T_{AD}^{(k+1),\ell}`. After each iteration, update :math:`T_{{\rm AD}}^{(k+1),\ell+1} = T_{{\rm AD}}^{(k+1),\ell} + \delta T^{(k+1),\ell+1}` and re-evaluate :math:`(C_p ,h_m)^{(k+1),\ell+1}` using :math:`(T_{{\rm AD}}^{(k+1),\ell+1}, Y_{m,{\rm AD}}^{n+1,(k+1)}`).
+
+  #. Based on the updates above, we define an effective contribution of advection and diffusion to the update of :math:`\rho Y_m` and :math:`\rho h`:
+
+    .. math::
+    
+        &&Q_{m}^{n+1,(k+1)} = A_m^{n+1/2,(k+1)} + D_{m,AD}^{(n+1,k+1)} + \frac{1}{2}(D_m^n - D_m^{n+1,(k)}) \\
+        &&Q_{h}^{n+1,(k+1)} = A_h^{n+1/2,(k+1)} + D_{T,AD}^{n+1,(k+1)} + H_{AD}^{n+1,(k+1)} + \frac{1}{2}(D_T^n - D_T^{n+1,(k)} + H^n - H^{n+1,(k)} )
+
+    that we treat as piecewise-constant source terms to advance :math:`(\rho Y_m,\rho h)^n` to :math:`(\rho Y_m,\rho h)^{n+1,(k+1)}`. The ODE system for the reaction part over :math:`\Delta t^n` then takes the following form:
+
+    .. math::
+    
+        \frac{\partial(\rho Y_m)}{\partial t} &=& Q_{m}^{n+1,(k+1)} + \rho\dot\omega_m(Y_m,T),\label{eq:MISDC VODE 3}\\
+        \frac{\partial(\rho h)}{\partial t} &=& Q_{h}^{n+1,(k+1)}.\label{eq:MISDC VODE 4}
+
+    After the integration is complete, we make one final call to the equation of state to compute :math:`T^{n+1,(k+1)}` from :math:`(Y_m,h)^{n+1,(k+1)}`.  We also can compute the effect of reactions in the evolution of :math:`\rho Y_m` using,
+
+    .. math::
+    
+        I_{R,m}^{(k+1)} = \frac{(\rho Y_m)^{n+1, (k+1)} - (\rho Y_m)^n}{\Delta t} - Q_{m}^{n+1,(k+1)}.
+
+    If :math:`k=k_{max}-1`, the time-advancement of the thermodynamic variables is complete, set :math:`(\rho Y_m,\rho h)^{n+1} = (\rho Y_m,\rho h)^{n+1,(k+1)}`.
+
+* Before moving to **Step 3**, the new time viscosity and instantaneous divergence constraint :math:`\widehat S^{n+1}` are evaluated.
 
 **Step 3**: (*Advance the velocity*) Compute an intermediate cell-centered velocity field, :math:`U^{n+1,*}` using the lagged pressure 
 gradient, by solving
@@ -304,14 +329,33 @@ in order to obtain *face-centered* velocities used to compute advective fluxes. 
 is used to obtain the provisional new-time velocities. Finally, a *nodal* solver is used to project the provisional new-time velocities so 
 that they satisfy the constraint.
 
-Temporal integration
-^^^^^^^^^^^^^^^^^^^^
-
 Advection schemes
 ^^^^^^^^^^^^^^^^^
+.. _ssec:advScheme:
+
+`PeleLMeX` relies on the `AMReX-Hydro <https://github.com/AMReX-Codes/AMReX-Hydro>`_ implementation of the 2nd-order Godunov method,
+with several variants available. The basis of the Godunov appraoch is to extrapolate the cell-centered quantity of interest (:math:`U`, :math:`\rho Y`, ...)
+ to cell faces using a second-order Taylor series expansion in space and time. As detailed in `AMReX-Hydro documentation <https://amrex-codes.github.io/amrex/hydro_html/Schemes.html#godunov-methodsThe>`_, the choice of the slope order and limiting scheme define the exact variant of the Godunov method.
+Of particular interest for combustion applications, where sharp gradients of intermediate chemical species are found within the flame front,
+the `Godunov_BDS` appraoch provide a bound-preserving advection scheme which greatly limit the appearance of over-/under-shoot, often leading to
+critical failure of the stiff chemical kinetic integration.
+
+Note that in the presence of EB, only the `Godunov_PLM` variant is available.
 
 AMR extension
 ^^^^^^^^^^^^^
+
+In contrast with `PeleLM <https://github.com/AMReX-Combustion/PeleLM>`_, `PeleLMeX` do not rely a on subcycling appraoch to advance the AMR hierarchy.
+This difference is illustrated in the figure below comparing the multi-level time-stepping approach in both codes:
+
+.. figure:: images/model/PeleLMeX_Subcycling.png
+   :align: center
+   :figwidth: 60%
+
+* `PeleLM` will recursively advance finer levels, halving the time step size (when using a refinement ratio of 2) at each level. For instance, considering a 3 levels simulation, `PeleLM` advances the coarse `Level0` over a :math:`\Delta t_0` step, then `Level1` over a :math:`\Delta t_1` step and `Level2` over two :math:`\Delta t_2` steps, performing an interpolation of the `Level1` data after the first step. At this point, a synchronization step is performed to ensure that the fluxes are conserved at coarse-fine interface and a second `Level1` step is performed, followed by the same two `Level2` steps. At this point, two synchronizations are needed between the two pairs of levels.
+* In order to get to the same physical time, `PeleLMeX` will perform 4 time steps of size similar to `PeleLM` :math:`\Delta t_2`, advancing all the level at once. The coarse-fine fluxe consistency is this time ensured by averaging down the face-centered fluxes from fine to coarse levels. Additionnally, the state itself is averaged down at the end of each SDC iteration.
+
+In practice, `PeleLM` will perform a total of 7 single-level advance steps, while `PeleLMeX` will perform 4 multi-level ones to reach the same physical time, advancing the coarser levels at a smaller CFL number whereas `PeleLM` maintain a fixed CFL at all the level. It might seem that `PeleLMeX` is thus performing extra work, but because it ignore fine-covered regions, `PeleLMeX` do not need to perform the expensive (and often very under-resolved) chemistry integration in fine-covered areas. An exact evaluation of the benefits and drawbacks of each appraoch is under way. 
 
 Geometry with Embedded Boundaries
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -322,8 +366,8 @@ mesh is uniform and block-structured, but the boundary of the irregular-shaped c
 through this mesh. Each cell in the mesh becomes labeled as regular, cut or covered, and the finite-volume 
 based discretization methods traditionally used in AMReX applications need to be modified to incorporate these cell shapes.
 AMReX provides the necessary EB data structures, including volume and area fractions, surface normals and centroids, 
-as well as local connectivity information. The fluxes are then modified to account for the apperture opening between adjacent
-cells and the additional EB-fluxes are included when constructing the cell flux divergences.
+as well as local connectivity information. The fluxes described in Section `_ssec:projScheme`_ are then modified to account 
+for the apperture opening between adjacent cells and the additional EB-fluxes are included when constructing the cell flux divergences.
 
 A common problem arising with EB is the presence of the small cut-cells which can either introduce undesirable constraint on 
 the explicit time step size or lead to numerical instabilities if not accounterd for. `PeleLMeX` relies on a combination of 
