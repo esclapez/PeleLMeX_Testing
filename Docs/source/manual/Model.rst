@@ -178,8 +178,8 @@ An overview of `PeleLMeX` time-advance function is provided in the figure below 
    :align: center
    :figwidth: 70%
 
-The three steps of the low Mach number projection scheme described in Section `_ssec:projScheme`_ are referenced to better emphasize how the thermodynamic solve is 
-closely weaved into the fractional step appraoch. Striped boxes indicate where the Godunov procedure described in Section `_ssec:advScheme`_ is employed while 
+The three steps of the low Mach number projection scheme described in Section `ssec:projScheme`_ are referenced to better emphasize how the thermodynamic solve is 
+closely weaved into the fractional step appraoch. Striped boxes indicate where the Godunov procedure described in Section `ssec:advScheme`_ is employed while 
 the four different linear solves are highlighted.
 
 Low Mach number projection scheme
@@ -333,12 +333,7 @@ Advection schemes
 ^^^^^^^^^^^^^^^^^
 .. _ssec:advScheme:
 
-`PeleLMeX` relies on the `AMReX-Hydro <https://github.com/AMReX-Codes/AMReX-Hydro>`_ implementation of the 2nd-order Godunov method,
-with several variants available. The basis of the Godunov appraoch is to extrapolate the cell-centered quantity of interest (:math:`U`, :math:`\rho Y`, ...)
- to cell faces using a second-order Taylor series expansion in space and time. As detailed in `AMReX-Hydro documentation <https://amrex-codes.github.io/amrex/hydro_html/Schemes.html#godunov-methodsThe>`_, the choice of the slope order and limiting scheme define the exact variant of the Godunov method.
-Of particular interest for combustion applications, where sharp gradients of intermediate chemical species are found within the flame front,
-the `Godunov_BDS` appraoch provide a bound-preserving advection scheme which greatly limit the appearance of over-/under-shoot, often leading to
-critical failure of the stiff chemical kinetic integration.
+`PeleLMeX` relies on the `AMReX-Hydro <https://github.com/AMReX-Codes/AMReX-Hydro>`_ implementation of the 2nd-order Godunov method, with several variants available. The basis of the Godunov appraoch is to extrapolate the cell-centered quantity of interest (:math:`U`, :math:`\rho Y`, :math:`\rho h`) to cell faces using a second-order Taylor series expansion in space and time. As detailed in `AMReX-Hydro documentation <https://amrex-codes.github.io/amrex/hydro_html/Schemes.html#godunov-methodsThe>`_, the choice of the slope order and limiting scheme define the exact variant of the Godunov method. Of particular interest for combustion applications, where sharp gradients of intermediate chemical species are found within the flame front, the `Godunov_BDS` appraoch provide a bound-preserving advection scheme which greatly limit the appearance of over-/under-shoot, often leading to critical failure of the stiff chemical kinetic integration.
 
 Note that in the presence of EB, only the `Godunov_PLM` variant is available.
 
@@ -350,7 +345,7 @@ This difference is illustrated in the figure below comparing the multi-level tim
 
 .. figure:: images/model/PeleLMeX_Subcycling.png
    :align: center
-   :figwidth: 60%
+   :figwidth: 90%
 
 * `PeleLM` will recursively advance finer levels, halving the time step size (when using a refinement ratio of 2) at each level. For instance, considering a 3 levels simulation, `PeleLM` advances the coarse `Level0` over a :math:`\Delta t_0` step, then `Level1` over a :math:`\Delta t_1` step and `Level2` over two :math:`\Delta t_2` steps, performing an interpolation of the `Level1` data after the first step. At this point, a synchronization step is performed to ensure that the fluxes are conserved at coarse-fine interface and a second `Level1` step is performed, followed by the same two `Level2` steps. At this point, two synchronizations are needed between the two pairs of levels.
 * In order to get to the same physical time, `PeleLMeX` will perform 4 time steps of size similar to `PeleLM` :math:`\Delta t_2`, advancing all the level at once. The coarse-fine fluxe consistency is this time ensured by averaging down the face-centered fluxes from fine to coarse levels. Additionnally, the state itself is averaged down at the end of each SDC iteration.
@@ -366,7 +361,7 @@ mesh is uniform and block-structured, but the boundary of the irregular-shaped c
 through this mesh. Each cell in the mesh becomes labeled as regular, cut or covered, and the finite-volume 
 based discretization methods traditionally used in AMReX applications need to be modified to incorporate these cell shapes.
 AMReX provides the necessary EB data structures, including volume and area fractions, surface normals and centroids, 
-as well as local connectivity information. The fluxes described in Section `_ssec:projScheme`_ are then modified to account 
+as well as local connectivity information. The fluxes described in Section `ssec:projScheme`_ are then modified to account 
 for the apperture opening between adjacent cells and the additional EB-fluxes are included when constructing the cell flux divergences.
 
 A common problem arising with EB is the presence of the small cut-cells which can either introduce undesirable constraint on 
