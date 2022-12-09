@@ -17,6 +17,15 @@ automatically with certain pushes to the `PeleLMeX` GibHub repository. A local v
 where ``PELELMEX_HOME`` is the location of your clone of the `PeleLMeX` repository.  To view the local pages,
 point your web browser at the file ``${PELELMEX_HOME}/Docs/build/html/index.html``.
 
+.. raw:: html
+
+   <style>
+   section#theory,
+   section#installation,
+   section#usage,
+   section#data-analysis,
+   </style>
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
