@@ -20,7 +20,8 @@ jobs:
           python3 -m pip install --user matplotlib
     - name: LMeX Ref
       run: .github/workflows/dependencies/peleRefDeps.sh
-          run: |
+    - name: Set Environment Variables
+      run: |
               echo "AMREX_HOME=${{github.workspace}}/buildRef/PeleLMeX/Submodules/amrex" >> $GITHUB_ENV
               echo "PELE_PHYSICS_HOME=${{github.workspace}}/buildRef/PeleLMeX/Submodules/PelePhysics" >> $GITHUB_ENV
               echo "AMREX_HYDRO_HOME=${{github.workspace}}/buildRef/PeleLMeX/Submodules/AMReX-Hydro" >> $GITHUB_ENV
@@ -36,7 +37,8 @@ jobs:
           ./PeleLMeX3d.gnu.MPI.ex inputs.3d
     - name: LMeX
       run: .github/workflows/dependencies/peleDeps.sh
-          run: |
+    - name: Reset Environment Variables
+      run: |
               echo "AMREX_HOME=${{github.workspace}}/build/PeleLMeX/Submodules/amrex" >> $GITHUB_ENV
               echo "PELE_PHYSICS_HOME=${{github.workspace}}/build/PeleLMeX/Submodules/PelePhysics" >> $GITHUB_ENV
               echo "AMREX_HYDRO_HOME=${{github.workspace}}/build/PeleLMeX/Submodules/AMReX-Hydro" >> $GITHUB_ENV
