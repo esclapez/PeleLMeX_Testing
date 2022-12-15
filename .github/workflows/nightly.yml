@@ -1,0 +1,58 @@
+name: LMeX_Nightly
+
+on:
+    workflow_dispatch:
+    schedule:
+        - cron: '0 2 * * *'
+
+jobs:
+  UT_FS:
+    name: UnitTest_FS
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v3
+    - name: System Dependencies
+      run: |
+          .github/workflows/dependencies/systemDeps.sh
+          sudo apt-get install -y python3-setuptools
+          python3 -m pip install --user numpy
+          python3 -m pip install --user argparse
+          python3 -m pip install --user matplotlib
+    - name: LMeX Ref
+      run: .github/workflows/dependencies/peleRefDeps.sh
+          run: |
+              echo "AMREX_HOME=${{github.workspace}}/buildRef/PeleLMeX/Submodules/amrex" >> $GITHUB_ENV
+              echo "PELE_PHYSICS_HOME=${{github.workspace}}/buildRef/PeleLMeX/Submodules/PelePhysics" >> $GITHUB_ENV
+              echo "AMREX_HYDRO_HOME=${{github.workspace}}/buildRef/PeleLMeX/Submodules/AMReX-Hydro" >> $GITHUB_ENV
+              echo "PELELMEX_HOME=${{github.workspace}}/buildRef/PeleLMeX/" >> $GITHUB_ENV
+    - name: Build Reference PeleLMeX
+      working-directory: ${{env.PELELMEX_HOME}}/Exec/UnitTests/DodecaneLu
+      run: |
+          make -j2 TPL COMP=gnu
+          make -j2 COMP=gnu
+    - name: Run Reference Case
+      working-directory: ${{env.PELELMEX_HOME}}/Exec/UnitTests/DodecaneLu
+      run: |
+          ./PeleLMeX3d.gnu.MPI.ex inputs.3d
+    - name: LMeX
+      run: .github/workflows/dependencies/peleDeps.sh
+          run: |
+              echo "AMREX_HOME=${{github.workspace}}/build/PeleLMeX/Submodules/amrex" >> $GITHUB_ENV
+              echo "PELE_PHYSICS_HOME=${{github.workspace}}/build/PeleLMeX/Submodules/PelePhysics" >> $GITHUB_ENV
+              echo "AMREX_HYDRO_HOME=${{github.workspace}}/build/PeleLMeX/Submodules/AMReX-Hydro" >> $GITHUB_ENV
+              echo "PELELMEX_HOME=${{github.workspace}}/build/PeleLMeX/" >> $GITHUB_ENV
+    - name: Build AMReX Tools
+      working-directory: ${{env.AMREX_HOME}}/Tools/Plotfile
+      run: |
+          make -j2 VERBOSE=FALSE
+    - name: Build PeleLMeX
+      working-directory: ${{env.PELELMEX_HOME}}/Exec/UnitTests/DodecaneLu
+      run: |
+          make -j2 TPL COMP=gnu
+          make -j2 COMP=gnu
+    - name: Run Case
+      working-directory: ${{env.PELELMEX_HOME}}/Exec/UnitTests/DodecaneLu
+      run: |
+          cp ${{env.AMREX_HOME}}/Tools/Plotfile/fcompare.gnu.ex .
+          ./PeleLMeX3d.gnu.MPI.ex inputs.3d
+          ./fcompare.gnu.ex pltEvaluate ${{github.workspace}}/buildRef/PeleLMeX/Exec/UnitTests/DodecaneLu/pltEvaluate
